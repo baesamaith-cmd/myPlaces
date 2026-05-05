@@ -1,0 +1,50 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  normalizeOcrText,
+  parseRestaurantFields,
+  buildPlaceRecord,
+} from '../parser.js';
+
+const sampleText = `foodstamp.sg Singapore
+Jurong's best authentic Sarawak Mee at $4.50
+Nearby Lakeside MRT Station (1.6km)
+JJ Sarawak Noodle
+3 Yung Sheng Rd, 03-127, Singapore 618499
+7AM - 7.30PM`;
+
+test('normalizeOcrText collapses repeated whitespace and blank lines', () => {
+  const normalized = normalizeOcrText(' A   B \n\n\n C  ');
+  assert.equal(normalized, 'A B\n\nC');
+});
+
+test('parseRestaurantFields extracts structured restaurant fields from screenshot text', () => {
+  const parsed = parseRestaurantFields(sampleText);
+
+  assert.equal(parsed.name, 'JJ Sarawak Noodle');
+  assert.equal(parsed.address, '3 Yung Sheng Rd, 03-127, Singapore 618499');
+  assert.equal(parsed.hours, '7AM - 7.30PM');
+  assert.equal(parsed.nearestLandmark, 'Lakeside MRT Station');
+  assert.equal(parsed.distanceNote, '1.6km');
+  assert.equal(parsed.description, "Jurong's best authentic Sarawak Mee");
+  assert.equal(parsed.priceNote, '$4.50');
+  assert.equal(parsed.area, 'Jurong');
+});
+
+test('buildPlaceRecord creates a map-ready place object with sensible defaults', () => {
+  const record = buildPlaceRecord({
+    ...parseRestaurantFields(sampleText),
+    lat: 1.3381,
+    lng: 103.7192,
+    geocodeSource: 'mock',
+  });
+
+  assert.equal(record.name, 'JJ Sarawak Noodle');
+  assert.equal(record.category, '면요리');
+  assert.equal(record.area, 'Jurong');
+  assert.equal(record.sourceType, 'image');
+  assert.equal(record.lat, 1.3381);
+  assert.equal(record.lng, 103.7192);
+  assert.match(record.id, /^jj-sarawak-noodle-/);
+  assert.equal(record.address, '3 Yung Sheng Rd, 03-127, Singapore 618499');
+});

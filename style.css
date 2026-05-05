@@ -7,6 +7,9 @@
   --line: #d9e1ea;
   --accent: #0f766e;
   --accent-soft: #e6fffb;
+  --accent-strong: #115e59;
+  --danger-soft: #fff1f2;
+  --danger: #be123c;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
@@ -16,24 +19,33 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg);
   color: var(--text);
 }
 
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 .app-shell {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 420px 1fr;
   min-height: 100vh;
 }
 
 .sidebar {
-  padding: 24px;
+  padding: 20px;
   background: var(--panel);
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
+  max-height: 100vh;
+  overflow: auto;
 }
 
 .eyebrow {
@@ -51,20 +63,63 @@ h1 {
   line-height: 1.15;
 }
 
+h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
 .subtitle {
   margin: 12px 0 0;
   color: var(--muted);
   line-height: 1.6;
 }
 
-.controls label,
-.list-header h2 {
-  font-size: 14px;
-  margin: 0 0 8px;
+.panel {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: var(--shadow);
 }
 
-.controls select {
+.section-title-row,
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.helper,
+.helper-text,
+#placeCount {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.upload-label,
+.controls label,
+.form-grid label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+input[type='file'] {
   width: 100%;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: #fbfdff;
+}
+
+.controls select,
+.form-grid input,
+.form-grid textarea {
+  width: 100%;
+  margin-top: 6px;
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid var(--line);
@@ -72,16 +127,149 @@ h1 {
   font-size: 14px;
 }
 
-.list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+.form-grid textarea {
+  resize: vertical;
 }
 
-#placeCount {
+.button-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.primary-button,
+.secondary-button {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.16s ease, opacity 0.16s ease, background 0.16s ease;
+}
+
+.primary-button:hover,
+.secondary-button:hover,
+.place-card:hover {
+  transform: translateY(-2px);
+}
+
+.primary-button {
+  background: var(--accent);
+  color: #fff;
+}
+
+.primary-button:hover {
+  background: var(--accent-strong);
+}
+
+.secondary-button {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.full-width-button {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.status-message {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
   color: var(--muted);
   font-size: 14px;
+  line-height: 1.5;
+}
+
+.status-message.error {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.status-message.success {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.source-details {
+  margin-top: 14px;
+}
+
+.source-details summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.source-preview {
+  margin: 10px 0 0;
+  padding: 12px;
+  max-height: 180px;
+  overflow: auto;
+  border-radius: 14px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.candidate-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty-state {
+  padding: 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.candidate-card {
+  display: block;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.candidate-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.candidate-card input {
+  margin-right: 8px;
+}
+
+.candidate-title {
+  font-weight: 700;
+}
+
+.candidate-description {
+  margin: 6px 0 0 24px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.list-panel {
+  min-height: 220px;
 }
 
 .place-list {
@@ -91,7 +279,6 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow: auto;
 }
 
 .place-card {
@@ -102,11 +289,6 @@ h1 {
   box-shadow: var(--shadow);
   cursor: pointer;
   transition: transform 0.18s ease, border-color 0.18s ease;
-}
-
-.place-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent);
 }
 
 .place-card.active {
@@ -137,7 +319,8 @@ h1 {
   font-weight: 600;
 }
 
-.place-card p {
+.place-card p,
+.popup-desc {
   margin: 0;
   color: var(--muted);
   line-height: 1.5;
@@ -161,13 +344,7 @@ h1 {
   font-size: 16px;
 }
 
-.popup-desc {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-@media (max-width: 960px) {
+@media (max-width: 1100px) {
   .app-shell {
     grid-template-columns: 1fr;
   }
@@ -175,6 +352,7 @@ h1 {
   .sidebar {
     border-right: none;
     border-bottom: 1px solid var(--line);
+    max-height: none;
   }
 
   .map-panel {
@@ -184,5 +362,19 @@ h1 {
   #map {
     height: 60vh;
     border-radius: 18px;
+  }
+}
+
+@media (max-width: 680px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .button-row {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    padding: 14px;
   }
 }

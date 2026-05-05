@@ -1,4 +1,10 @@
-const map = L.map('map').setView([1.3521, 103.8198], 12);
+import { buildPlaceRecord, parseRestaurantFields } from './parser.js';
+
+const STORAGE_KEY = 'myPlaces.userPlaces.v1';
+const DEFAULT_CENTER = [1.3521, 103.8198];
+const DEFAULT_ZOOM = 12;
+
+const map = L.map('map').setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
@@ -8,13 +14,40 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const categoryFilter = document.getElementById('categoryFilter');
 const placeList = document.getElementById('placeList');
 const placeCount = document.getElementById('placeCount');
+const imageUpload = document.getElementById('imageUpload');
+const runOcrButton = document.getElementById('runOcrButton');
+const previewButton = document.getElementById('previewButton');
+const saveParsedPlaceButton = document.getElementById('saveParsedPlace');
+const ocrStatus = document.getElementById('ocrStatus');
+const selectedFileName = document.getElementById('selectedFileName');
+const sourceTextPreview = document.getElementById('sourceTextPreview');
+const geocodeCandidates = document.getElementById('geocodeCandidates');
+
+const fieldRefs = {
+  name: document.getElementById('parsedName'),
+  address: document.getElementById('parsedAddress'),
+  hours: document.getElementById('parsedHours'),
+  category: document.getElementById('parsedCategory'),
+  nearestLandmark: document.getElementById('parsedLandmark'),
+  distanceNote: document.getElementById('parsedDistanceNote'),
+  priceNote: document.getElementById('parsedPriceNote'),
+  area: document.getElementById('parsedArea'),
+  description: document.getElementById('parsedDescription'),
+};
 
 const markers = [];
 let allPlaces = [];
+let seedPlaces = [];
+let userPlaces = [];
 let activeCard = null;
+let previewMarker = null;
+let latestSourceText = '';
+let latestParsedData = null;
+let latestGeocodeCandidates = [];
+let selectedGeocodeCandidate = null;
 
 function escapeHtml(value) {
-  return String(value)
+  return String(value ?? '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -22,16 +55,33 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
-function renderCategories(places) {
-  const categories = [...new Set(places.map((place) => place.category))].sort();
-  categoryFilter.innerHTML = '<option value="all">전체</option>';
+function slugCategory(text) {
+  const value = `${text || ''}`.trim();
+  return value || '기타';
+}
 
-  categories.forEach((category) => {
-    const option = document.createElement('option');
-    option.value = category;
-    option.textContent = category;
-    categoryFilter.appendChild(option);
-  });
+function inferCategoryFromForm(name, description) {
+  const text = `${name} ${description}`.toLowerCase();
+  if (/mee|noodle|ramen|면/.test(text)) return '면요리';
+  if (/coffee|cafe|bakery|카페/.test(text)) return '카페';
+  if (/bbq|bar|cocktail|bar\//.test(text)) return '바/다이닝';
+  return '맛집';
+}
+
+function buildDescription(place) {
+  const fragments = [place.description];
+  if (place.address) fragments.push(`주소: ${place.address}`);
+  if (place.hours) fragments.push(`영업시간: ${place.hours}`);
+  if (place.priceNote) fragments.push(`가격: ${place.priceNote}`);
+  return fragments.filter(Boolean).join(' · ');
+}
+
+function setStatus(message, variant = 'default') {
+  ocrStatus.textContent = message;
+  ocrStatus.className = 'status-message';
+  if (variant !== 'default') {
+    ocrStatus.classList.add(variant);
+  }
 }
 
 function setActiveCard(cardElement) {
@@ -45,12 +95,36 @@ function clearMarkers() {
   markers.length = 0;
 }
 
+function renderCategories(places) {
+  const currentValue = categoryFilter.value;
+  const categories = [...new Set(places.map((place) => slugCategory(place.category)))].sort();
+  categoryFilter.innerHTML = '<option value="all">전체</option>';
+
+  categories.forEach((category) => {
+    const option = document.createElement('option');
+    option.value = category;
+    option.textContent = category;
+    categoryFilter.appendChild(option);
+  });
+
+  if (categories.includes(currentValue)) {
+    categoryFilter.value = currentValue;
+  }
+}
+
+function clearPreviewMarker() {
+  if (previewMarker) {
+    previewMarker.remove();
+    previewMarker = null;
+  }
+}
+
 function renderPlaces() {
   const selectedCategory = categoryFilter.value;
   const filteredPlaces =
     selectedCategory === 'all'
       ? allPlaces
-      : allPlaces.filter((place) => place.category === selectedCategory);
+      : allPlaces.filter((place) => slugCategory(place.category) === selectedCategory);
 
   placeCount.textContent = `${filteredPlaces.length}개`;
   placeList.innerHTML = '';
@@ -64,7 +138,7 @@ function renderPlaces() {
     marker.bindPopup(`
       <div>
         <h3 class="popup-title">${escapeHtml(place.name)}</h3>
-        <p class="popup-desc">${escapeHtml(place.description)}</p>
+        <p class="popup-desc">${escapeHtml(buildDescription(place))}</p>
       </div>
     `);
     markers.push(marker);
@@ -75,15 +149,15 @@ function renderPlaces() {
     item.innerHTML = `
       <h3>${escapeHtml(place.name)}</h3>
       <div class="meta-row">
-        <span class="badge">${escapeHtml(place.category)}</span>
-        <span class="badge">${escapeHtml(place.area)}</span>
+        <span class="badge">${escapeHtml(slugCategory(place.category))}</span>
+        <span class="badge">${escapeHtml(place.area || 'Singapore')}</span>
       </div>
-      <p>${escapeHtml(place.description)}</p>
+      <p>${escapeHtml(buildDescription(place))}</p>
     `;
 
     item.addEventListener('click', () => {
       setActiveCard(item);
-      map.flyTo([place.lat, place.lng], 15, {
+      map.flyTo([place.lat, place.lng], 16, {
         duration: 0.8,
       });
       marker.openPopup();
@@ -95,7 +169,266 @@ function renderPlaces() {
 
   if (bounds.length > 0) {
     map.fitBounds(bounds, { padding: [40, 40] });
+  } else {
+    map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
   }
+}
+
+function loadSavedPlaces() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
+function persistSavedPlaces() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(userPlaces));
+}
+
+function updateAllPlaces() {
+  allPlaces = [...userPlaces, ...seedPlaces];
+  renderCategories(allPlaces);
+  renderPlaces();
+}
+
+function populateForm(parsed) {
+  fieldRefs.name.value = parsed.name || '';
+  fieldRefs.address.value = parsed.address || '';
+  fieldRefs.hours.value = parsed.hours || '';
+  fieldRefs.category.value = parsed.category || inferCategoryFromForm(parsed.name, parsed.description);
+  fieldRefs.nearestLandmark.value = parsed.nearestLandmark || '';
+  fieldRefs.distanceNote.value = parsed.distanceNote || '';
+  fieldRefs.priceNote.value = parsed.priceNote || '';
+  fieldRefs.area.value = parsed.area || 'Singapore';
+  fieldRefs.description.value = parsed.description || '';
+}
+
+function readFormDraft() {
+  const name = fieldRefs.name.value.trim();
+  const description = fieldRefs.description.value.trim();
+
+  return {
+    ...latestParsedData,
+    name,
+    address: fieldRefs.address.value.trim(),
+    hours: fieldRefs.hours.value.trim(),
+    category: fieldRefs.category.value.trim() || inferCategoryFromForm(name, description),
+    nearestLandmark: fieldRefs.nearestLandmark.value.trim(),
+    distanceNote: fieldRefs.distanceNote.value.trim(),
+    priceNote: fieldRefs.priceNote.value.trim(),
+    area: fieldRefs.area.value.trim() || 'Singapore',
+    description,
+    sourceText: latestSourceText,
+    sourceType: 'image',
+  };
+}
+
+function renderCandidateList(candidates) {
+  latestGeocodeCandidates = candidates;
+
+  if (!candidates.length) {
+    geocodeCandidates.className = 'candidate-list empty-state';
+    geocodeCandidates.textContent = '위치 후보를 찾지 못했습니다. 주소를 수정한 뒤 다시 시도해보세요.';
+    selectedGeocodeCandidate = null;
+    clearPreviewMarker();
+    return;
+  }
+
+  geocodeCandidates.className = 'candidate-list';
+  geocodeCandidates.innerHTML = '';
+
+  candidates.forEach((candidate, index) => {
+    const label = document.createElement('label');
+    label.className = 'candidate-card';
+    if (index === 0) label.classList.add('selected');
+    label.innerHTML = `
+      <div>
+        <span class="candidate-title">
+          <input type="radio" name="geocodeCandidate" value="${index}" ${index === 0 ? 'checked' : ''} />
+          후보 ${index + 1}
+        </span>
+        <p class="candidate-description">${escapeHtml(candidate.displayName)}</p>
+      </div>
+    `;
+
+    label.addEventListener('change', () => {
+      selectCandidate(index);
+    });
+    label.addEventListener('click', () => {
+      selectCandidate(index);
+    });
+
+    geocodeCandidates.appendChild(label);
+  });
+
+  selectCandidate(0);
+}
+
+function selectCandidate(index) {
+  selectedGeocodeCandidate = latestGeocodeCandidates[index] || null;
+
+  [...geocodeCandidates.querySelectorAll('.candidate-card')].forEach((node, nodeIndex) => {
+    node.classList.toggle('selected', nodeIndex === index);
+    const radio = node.querySelector('input[type="radio"]');
+    if (radio) radio.checked = nodeIndex === index;
+  });
+
+  if (!selectedGeocodeCandidate) {
+    clearPreviewMarker();
+    return;
+  }
+
+  const lat = Number(selectedGeocodeCandidate.lat);
+  const lng = Number(selectedGeocodeCandidate.lng);
+  clearPreviewMarker();
+  previewMarker = L.circleMarker([lat, lng], {
+    radius: 10,
+    weight: 3,
+    color: '#be123c',
+    fillColor: '#fb7185',
+    fillOpacity: 0.8,
+  }).addTo(map);
+
+  const draft = readFormDraft();
+  previewMarker.bindPopup(`
+    <div>
+      <h3 class="popup-title">${escapeHtml(draft.name || '미리보기 장소')}</h3>
+      <p class="popup-desc">${escapeHtml(draft.address || selectedGeocodeCandidate.displayName)}</p>
+    </div>
+  `);
+  previewMarker.openPopup();
+  map.flyTo([lat, lng], 16, { duration: 0.8 });
+}
+
+async function geocodeDraft(draft) {
+  const queries = [draft.address, [draft.name, draft.area, 'Singapore'].filter(Boolean).join(', ')].filter(Boolean);
+  const seen = new Set();
+  const results = [];
+
+  for (const query of queries) {
+    const url = new URL('https://nominatim.openstreetmap.org/search');
+    url.searchParams.set('format', 'jsonv2');
+    url.searchParams.set('limit', '3');
+    url.searchParams.set('countrycodes', 'sg');
+    url.searchParams.set('q', query);
+
+    const response = await fetch(url, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`지오코딩 실패: ${response.status}`);
+    }
+
+    const data = await response.json();
+    data.forEach((item) => {
+      const key = `${item.lat}:${item.lon}:${item.display_name}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      results.push({
+        lat: Number(item.lat),
+        lng: Number(item.lon),
+        displayName: item.display_name,
+        geocodeSource: 'nominatim',
+      });
+    });
+
+    if (results.length) break;
+  }
+
+  return results.slice(0, 3);
+}
+
+async function runOcr(file) {
+  if (!window.Tesseract) {
+    throw new Error('Tesseract.js를 불러오지 못했습니다.');
+  }
+
+  const result = await window.Tesseract.recognize(file, 'eng');
+  return result.data.text;
+}
+
+async function handleRunOcr() {
+  const [file] = imageUpload.files;
+  if (!file) {
+    setStatus('먼저 이미지를 선택해주세요.', 'error');
+    return;
+  }
+
+  try {
+    setStatus('OCR 실행 중… 이미지에서 텍스트를 읽고 있어요.');
+    runOcrButton.disabled = true;
+    const rawText = await runOcr(file);
+    latestSourceText = rawText.trim();
+    const parsed = parseRestaurantFields(rawText);
+    parsed.category = inferCategoryFromForm(parsed.name, parsed.description);
+    latestParsedData = parsed;
+    populateForm(parsed);
+    sourceTextPreview.textContent = parsed.sourceText || '텍스트를 추출하지 못했습니다.';
+    renderCandidateList([]);
+    setStatus('OCR 완료. 추출된 필드를 확인하고 지도 미리보기를 눌러주세요.', 'success');
+  } catch (error) {
+    console.error(error);
+    setStatus(`OCR 실패: ${error.message}`, 'error');
+  } finally {
+    runOcrButton.disabled = false;
+  }
+}
+
+async function handlePreview() {
+  const draft = readFormDraft();
+  if (!draft.name) {
+    setStatus('가게 이름이 비어 있습니다. OCR 결과를 확인하거나 직접 입력해주세요.', 'error');
+    return;
+  }
+
+  try {
+    previewButton.disabled = true;
+    setStatus('위치 후보를 찾는 중…');
+    const candidates = await geocodeDraft(draft);
+    renderCandidateList(candidates);
+    if (candidates.length) {
+      setStatus('위치 후보를 찾았습니다. 후보를 확인한 뒤 저장할 수 있어요.', 'success');
+    } else {
+      setStatus('후보를 찾지 못했습니다. 주소나 이름을 조금 더 구체적으로 수정해보세요.', 'error');
+    }
+  } catch (error) {
+    console.error(error);
+    setStatus(`미리보기 실패: ${error.message}`, 'error');
+  } finally {
+    previewButton.disabled = false;
+  }
+}
+
+function handleSave() {
+  const draft = readFormDraft();
+  if (!draft.name) {
+    setStatus('저장하려면 가게 이름이 필요합니다.', 'error');
+    return;
+  }
+  if (!selectedGeocodeCandidate) {
+    setStatus('먼저 지도에 미리보기로 위치 후보를 선택해주세요.', 'error');
+    return;
+  }
+
+  const placeRecord = buildPlaceRecord({
+    ...draft,
+    lat: selectedGeocodeCandidate.lat,
+    lng: selectedGeocodeCandidate.lng,
+    geocodeSource: selectedGeocodeCandidate.geocodeSource,
+  });
+
+  userPlaces = [placeRecord, ...userPlaces];
+  persistSavedPlaces();
+  updateAllPlaces();
+  setStatus(`'${placeRecord.name}' 저장 완료. localStorage에 보관했어요.`, 'success');
 }
 
 async function init() {
@@ -105,14 +438,24 @@ async function init() {
       throw new Error(`데이터를 불러오지 못했습니다: ${response.status}`);
     }
 
-    allPlaces = await response.json();
-    renderCategories(allPlaces);
-    renderPlaces();
+    seedPlaces = await response.json();
+    userPlaces = loadSavedPlaces();
+    updateAllPlaces();
   } catch (error) {
     console.error(error);
     placeList.innerHTML = '<li class="place-card">데이터를 불러오지 못했습니다.</li>';
+    setStatus('초기 데이터를 불러오지 못했습니다.', 'error');
   }
 }
 
+imageUpload.addEventListener('change', () => {
+  const [file] = imageUpload.files;
+  selectedFileName.textContent = file ? `선택된 파일: ${file.name}` : '선택된 파일이 없습니다.';
+});
+
+runOcrButton.addEventListener('click', handleRunOcr);
+previewButton.addEventListener('click', handlePreview);
+saveParsedPlaceButton.addEventListener('click', handleSave);
 categoryFilter.addEventListener('change', renderPlaces);
+
 init();
