@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>myPlaces</title>
+    <meta
+      name="description"
+      content="저장한 맛집을 지도 위에서 빠르게 확인하는 GitHub Pages용 MVP"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div>
+          <p class="eyebrow">myPlaces</p>
+          <h1>온라인 지도 맛집 저장 MVP</h1>
+          <p class="subtitle">
+            GitHub Pages에서 바로 띄울 수 있는 정적 지도 앱. 샘플 맛집 데이터를
+            지도와 리스트에서 함께 확인할 수 있어요.
+          </p>
+        </div>
+
+        <section class="controls">
+          <label for="categoryFilter">카테고리</label>
+          <select id="categoryFilter">
+            <option value="all">전체</option>
+          </select>
+        </section>
+
+        <section>
+          <div class="list-header">
+            <h2>저장된 장소</h2>
+            <span id="placeCount">0개</span>
+          </div>
+          <ul id="placeList" class="place-list"></ul>
+        </section>
+      </aside>
+
+      <main class="map-panel">
+        <div id="map" aria-label="맛집 지도"></div>
+      </main>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Maxwell Food Centre",
+    "category": "호커센터",
+    "area": "Chinatown",
+    "lat": 1.2803,
+    "lng": 103.8447,
+    "description": "싱가포르 대표 호커센터. 여러 로컬 음식을 한 번에 탐색하기 좋아요."
+  },
+  {
+    "name": "Tiong Bahru Bakery",
+    "category": "카페",
+    "area": "Tiong Bahru",
+    "lat": 1.2824,
+    "lng": 103.8173,
+    "description": "브런치와 페이스트리로 유명한 인기 카페."
+  },
+  {
+    "name": "Burnt Ends",
+    "category": "레스토랑",
+    "area": "Dempsey",
+    "lat": 1.3054,
+    "lng": 103.815,
+    "description": "예약 경쟁이 치열한 싱가포르 인기 바비큐 레스토랑."
+  },
+  {
+    "name": "Lau Pa Sat",
+    "category": "호커센터",
+    "area": "CBD",
+    "lat": 1.2806,
+    "lng": 103.8506,
+    "description": "사테 거리로도 유명한 중심지 호커센터."
+  },
+  {
+    "name": "Atlas",
+    "category": "바/다이닝",
+    "area": "Bugis",
+    "lat": 1.3016,
+    "lng": 103.8608,
+    "description": "분위기 있는 공간에서 식사와 칵테일을 함께 즐길 수 있는 곳."
+  }
+]
