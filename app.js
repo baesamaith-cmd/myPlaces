@@ -1,6 +1,7 @@
 import { buildPlaceRecord, parseRestaurantFields } from './parser.js';
 import { buildPlaceActionLinks } from './map-links.js';
 import { parseImportedPlaces, serializePlaces } from './storage-transfer.js';
+import { buildCandidateFromPlace, upsertUserPlace } from './user-place-utils.js';
 
 const STORAGE_KEY = 'myPlaces.userPlaces.v1';
 const DEFAULT_CENTER = [1.3521, 103.8198];
@@ -23,10 +24,12 @@ const saveParsedPlaceButton = document.getElementById('saveParsedPlace');
 const exportJsonButton = document.getElementById('exportJsonButton');
 const importJsonInput = document.getElementById('importJsonInput');
 const importJsonButton = document.getElementById('importJsonButton');
+const cancelEditButton = document.getElementById('cancelEditButton');
 const ocrStatus = document.getElementById('ocrStatus');
 const selectedFileName = document.getElementById('selectedFileName');
 const sourceTextPreview = document.getElementById('sourceTextPreview');
 const geocodeCandidates = document.getElementById('geocodeCandidates');
+const editModeHint = document.getElementById('editModeHint');
 
 const fieldRefs = {
   name: document.getElementById('parsedName'),
@@ -50,6 +53,7 @@ let latestSourceText = '';
 let latestParsedData = null;
 let latestGeocodeCandidates = [];
 let selectedGeocodeCandidate = null;
+let editingPlaceId = null;
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -87,6 +91,35 @@ function setStatus(message, variant = 'default') {
   if (variant !== 'default') {
     ocrStatus.classList.add(variant);
   }
+}
+
+function updateFormMode() {
+  const isEditing = Boolean(editingPlaceId);
+  saveParsedPlaceButton.textContent = isEditing ? '수정 저장' : '저장하기';
+  cancelEditButton.hidden = !isEditing;
+  editModeHint.textContent = isEditing
+    ? '저장된 장소를 수정 중입니다. 필요하면 제목/주소를 바꾸고 다시 저장하세요.'
+    : '새 장소 저장 모드입니다.';
+}
+
+function startEditingPlace(place) {
+  editingPlaceId = place.id;
+  latestParsedData = { ...place };
+  latestSourceText = place.sourceText || '';
+  populateForm(place);
+  renderCandidateList([buildCandidateFromPlace(place)]);
+  updateFormMode();
+  setStatus(`'${place.name}' 수정 모드입니다. 필드를 바꾸고 다시 저장하세요.`, 'success');
+}
+
+function stopEditingPlace() {
+  editingPlaceId = null;
+  latestGeocodeCandidates = [];
+  selectedGeocodeCandidate = null;
+  clearPreviewMarker();
+  geocodeCandidates.className = 'candidate-list empty-state';
+  geocodeCandidates.textContent = '아직 위치 후보가 없습니다.';
+  updateFormMode();
 }
 
 function setActiveCard(cardElement) {
@@ -153,8 +186,15 @@ function renderPlaces() {
     const item = document.createElement('li');
     item.className = 'place-card';
     item.innerHTML = `
-      <h3>${escapeHtml(place.name)}</h3>
-      <div class="meta-row">
+      <div class="place-card-glow"></div>
+      <div class="place-card-head">
+        <div>
+          <h3>${escapeHtml(place.name)}</h3>
+          <p class="place-card-address">${escapeHtml(place.address || '주소 정보 없음')}</p>
+        </div>
+        <button type="button" class="place-edit-button">수정하기</button>
+      </div>
+      <div class="meta-row place-meta-row">
         <span class="badge">${escapeHtml(slugCategory(place.category))}</span>
         <span class="badge">${escapeHtml(place.area || 'Singapore')}</span>
       </div>
@@ -166,7 +206,11 @@ function renderPlaces() {
           target="_blank"
           rel="noreferrer noopener"
         >
-          구글맵에서 보기
+          <span class="google-maps-icon" aria-hidden="true">
+            <span class="gm-pin-head"></span>
+            <span class="gm-pin-tail"></span>
+          </span>
+          <span>구글맵에서 보기</span>
         </a>
         <a
           class="place-action-link secondary"
@@ -174,10 +218,26 @@ function renderPlaces() {
           target="_blank"
           rel="noreferrer noopener"
         >
-          길찾기
+          <span class="google-maps-icon route" aria-hidden="true">
+            <span class="gm-pin-head"></span>
+            <span class="gm-pin-tail"></span>
+          </span>
+          <span>길찾기</span>
         </a>
       </div>
     `;
+
+    const editButton = item.querySelector('.place-edit-button');
+    editButton?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      startEditingPlace(place);
+    });
+
+    item.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+    });
 
     item.addEventListener('click', () => {
       setActiveCard(item);
@@ -272,8 +332,8 @@ function readFormDraft() {
     priceNote: fieldRefs.priceNote.value.trim(),
     area: fieldRefs.area.value.trim() || 'Singapore',
     description,
-    sourceText: latestSourceText,
-    sourceType: 'image',
+    sourceText: latestSourceText || latestParsedData?.sourceText || '',
+    sourceType: latestParsedData?.sourceType || 'image',
   };
 }
 
@@ -478,6 +538,7 @@ async function handleRunOcr() {
   }
 
   try {
+    stopEditingPlace();
     setStatus('OCR 실행 중… 이미지에서 텍스트를 읽고 있어요. 첫 실행은 10~30초 정도 걸릴 수 있어요.');
     runOcrButton.disabled = true;
     await new Promise((resolve) => window.requestAnimationFrame(resolve));
@@ -536,15 +597,20 @@ function handleSave() {
 
   const placeRecord = buildPlaceRecord({
     ...draft,
+    id: editingPlaceId || draft.id,
     lat: selectedGeocodeCandidate.lat,
     lng: selectedGeocodeCandidate.lng,
     geocodeSource: selectedGeocodeCandidate.geocodeSource,
   });
 
-  userPlaces = [placeRecord, ...userPlaces];
+  userPlaces = upsertUserPlace(userPlaces, placeRecord);
   persistSavedPlaces();
   updateAllPlaces();
-  setStatus(`'${placeRecord.name}' 저장 완료. localStorage에 보관했어요.`, 'success');
+  const message = editingPlaceId
+    ? `'${placeRecord.name}' 수정 완료. 저장된 장소 정보를 업데이트했어요.`
+    : `'${placeRecord.name}' 저장 완료. localStorage에 보관했어요.`;
+  stopEditingPlace();
+  setStatus(message, 'success');
 }
 
 function handleExportJson() {
@@ -592,6 +658,7 @@ async function init() {
 
     seedPlaces = await response.json();
     userPlaces = loadSavedPlaces();
+    updateFormMode();
     updateAllPlaces();
   } catch (error) {
     console.error(error);
@@ -603,6 +670,11 @@ async function init() {
 imageUpload.addEventListener('change', () => {
   const [file] = imageUpload.files;
   selectedFileName.textContent = file ? `선택된 파일: ${file.name}` : '선택된 파일이 없습니다.';
+});
+
+cancelEditButton.addEventListener('click', () => {
+  stopEditingPlace();
+  setStatus('수정 모드를 종료했어요. 새 장소를 저장하거나 다른 장소를 다시 선택할 수 있어요.');
 });
 
 runOcrButton.addEventListener('click', handleRunOcr);

@@ -15,7 +15,10 @@ test('index exposes three primary quick actions at the top of the sidebar', () =
   assert.match(heroSection[1], /id="previewButton"[^>]*>\s*지도에 미리보기\s*</, 'preview action should be visible at top');
 });
 
-test('saved place cards include Google Maps view and directions actions', () => {
+test('saved place cards include Google Maps view, directions, and edit actions', () => {
   assert.match(appJs, /구글맵에서 보기/, 'saved place card should expose Google Maps view action');
   assert.match(appJs, /길찾기/, 'saved place card should expose directions action');
+  assert.match(appJs, /수정하기/, 'saved place card should expose edit action');
+  assert.match(appJs, /google-maps-icon/, 'saved place card should render a Google Maps icon');
+  assert.match(appJs, /place-card-glow/, 'saved place card should use the upgraded premium card shell');
 });

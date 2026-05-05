@@ -129,7 +129,7 @@ export function parseRestaurantFields(rawText = '') {
 export function buildPlaceRecord(parsed) {
   const timestamp = Date.now();
   return {
-    id: `${slugify(parsed.name || 'place')}-${timestamp}`,
+    id: parsed.id || `${slugify(parsed.name || 'place')}-${timestamp}`,
     name: parsed.name || '이름 미확인 장소',
     category: parsed.category || inferCategory(parsed),
     area: parsed.area || 'Singapore',

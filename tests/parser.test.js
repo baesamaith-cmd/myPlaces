@@ -53,3 +53,14 @@ test('buildPlaceRecord creates a map-ready place object with sensible defaults',
   assert.match(record.id, /^jj-sarawak-noodle-/);
   assert.equal(record.address, '3 Yung Sheng Rd, 03-127, Singapore 618499');
 });
+
+test('buildPlaceRecord preserves an existing id for saved-place edits', () => {
+  const record = buildPlaceRecord({
+    id: 'saved-place-1',
+    name: 'Edited Place',
+    lat: 1.3,
+    lng: 103.8,
+  });
+
+  assert.equal(record.id, 'saved-place-1');
+});
