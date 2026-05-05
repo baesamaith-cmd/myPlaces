@@ -167,6 +167,16 @@ function renderPlaces() {
     placeList.appendChild(item);
   });
 
+  if (!filteredPlaces.length) {
+    const item = document.createElement('li');
+    item.className = 'place-card empty-place-card';
+    item.innerHTML = `
+      <h3>아직 저장된 장소가 없습니다</h3>
+      <p>OCR로 새 맛집을 추가하면 이 리스트와 지도에 바로 나타납니다.</p>
+    `;
+    placeList.appendChild(item);
+  }
+
   if (bounds.length > 0) {
     map.fitBounds(bounds, { padding: [40, 40] });
   } else {
