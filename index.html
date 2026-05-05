@@ -8,6 +8,12 @@
       name="description"
       content="저장한 맛집을 지도 위에서 빠르게 확인하는 GitHub Pages용 MVP"
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -17,25 +23,54 @@
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
+    <div class="page-glow page-glow-left"></div>
+    <div class="page-glow page-glow-right"></div>
+
     <div class="app-shell">
       <aside class="sidebar">
-        <div>
-          <p class="eyebrow">myPlaces</p>
-          <h1>온라인 지도 맛집 저장 MVP</h1>
+        <section class="hero-card panel">
+          <div class="hero-topline">
+            <p class="eyebrow">myPlaces</p>
+            <span class="hero-chip">Singapore Food Map</span>
+          </div>
+
+          <h1>캡처 한 장으로 맛집을 지도에 저장하세요</h1>
           <p class="subtitle">
-            캡처 이미지를 올리면 OCR로 텍스트를 읽고, 장소 정보를 파싱한 뒤 지도에
-            미리보기/저장까지 할 수 있어요.
+            인스타 캡처를 OCR로 읽고, 주소를 파싱하고, 지도에 미리보기까지 한 번에.
+            지금은 GitHub Pages에서 돌아가는 초경량 MVP입니다.
           </p>
-        </div>
+
+          <div class="hero-metrics" aria-label="서비스 요약">
+            <div class="metric-card">
+              <span class="metric-label">Flow</span>
+              <strong>OCR → Parse → Map</strong>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Storage</span>
+              <strong>localStorage MVP</strong>
+            </div>
+          </div>
+        </section>
 
         <section class="panel upload-panel">
           <div class="section-title-row">
-            <h2>캡처에서 장소 추가</h2>
-            <span class="helper">MVP</span>
+            <div>
+              <p class="section-kicker">Capture ingestion</p>
+              <h2>캡처에서 장소 추가</h2>
+            </div>
+            <span class="helper badge-soft">MVP</span>
           </div>
+
           <label class="upload-label" for="imageUpload">이미지 업로드</label>
-          <input id="imageUpload" type="file" accept="image/*" />
+          <div class="upload-dropzone">
+            <input id="imageUpload" type="file" accept="image/*" />
+            <div class="dropzone-copy">
+              <strong>캡처 이미지를 선택하세요</strong>
+              <p>인스타/블로그/스크린샷 이미지를 올리면 OCR을 시작합니다.</p>
+            </div>
+          </div>
           <p id="selectedFileName" class="helper-text">선택된 파일이 없습니다.</p>
+
           <div class="button-row">
             <button id="runOcrButton" type="button" class="primary-button">
               OCR 실행
@@ -44,6 +79,7 @@
               지도에 미리보기
             </button>
           </div>
+
           <p id="ocrStatus" class="status-message" aria-live="polite">
             이미지를 선택하고 OCR 실행을 눌러주세요.
           </p>
@@ -100,8 +136,14 @@
             <pre id="sourceTextPreview" class="source-preview">아직 OCR 결과가 없습니다.</pre>
           </details>
 
-          <div id="geocodeCandidates" class="candidate-list empty-state">
-            아직 위치 후보가 없습니다.
+          <div class="candidate-section">
+            <div class="section-title-row compact-row">
+              <h3 class="mini-title">위치 후보</h3>
+              <span class="helper">Geocoding result</span>
+            </div>
+            <div id="geocodeCandidates" class="candidate-list empty-state">
+              아직 위치 후보가 없습니다.
+            </div>
           </div>
 
           <button id="saveParsedPlace" type="button" class="primary-button full-width-button">
@@ -109,7 +151,13 @@
           </button>
         </section>
 
-        <section class="controls panel">
+        <section class="controls panel filter-panel">
+          <div class="section-title-row compact-row">
+            <div>
+              <p class="section-kicker">Browse</p>
+              <h2>저장된 장소 필터</h2>
+            </div>
+          </div>
           <label for="categoryFilter">카테고리</label>
           <select id="categoryFilter">
             <option value="all">전체</option>
@@ -118,7 +166,10 @@
 
         <section class="panel list-panel">
           <div class="list-header">
-            <h2>저장된 장소</h2>
+            <div>
+              <p class="section-kicker">Collection</p>
+              <h2>저장된 장소</h2>
+            </div>
             <span id="placeCount">0개</span>
           </div>
           <ul id="placeList" class="place-list"></ul>
@@ -126,7 +177,19 @@
       </aside>
 
       <main class="map-panel">
-        <div id="map" aria-label="맛집 지도"></div>
+        <section class="map-frame">
+          <div class="map-header panel">
+            <div>
+              <p class="section-kicker">Live map</p>
+              <h2>Singapore restaurant view</h2>
+            </div>
+            <div class="map-badges">
+              <span class="badge">OCR import</span>
+              <span class="badge">Map preview</span>
+            </div>
+          </div>
+          <div id="map" aria-label="맛집 지도"></div>
+        </section>
       </main>
     </div>
 
