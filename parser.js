@@ -2,6 +2,7 @@ const AREA_KEYWORDS = ['Jurong', 'Bugis', 'Chinatown', 'Tiong Bahru', 'CBD', 'De
 
 export function normalizeOcrText(text = '') {
   return String(text)
+    .replace(/[?？]+/g, ' ')
     .replace(/\r/g, '')
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')

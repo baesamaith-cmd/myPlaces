@@ -14,8 +14,13 @@ JJ Sarawak Noodle
 7AM - 7.30PM`;
 
 test('normalizeOcrText collapses repeated whitespace and blank lines', () => {
-  const normalized = normalizeOcrText(' A   B \n\n\n C  ');
+  const normalized = normalizeOcrText(' A   B ?\n\n\n C  ');
   assert.equal(normalized, 'A B\n\nC');
+});
+
+test('normalizeOcrText removes OCR question-mark noise from mixed text', () => {
+  const normalized = normalizeOcrText('JJ ? Sarawak？？ Noodle\n3 Yung Sheng Rd ? Singapore 618499');
+  assert.equal(normalized, 'JJ Sarawak Noodle\n3 Yung Sheng Rd Singapore 618499');
 });
 
 test('parseRestaurantFields extracts structured restaurant fields from screenshot text', () => {
