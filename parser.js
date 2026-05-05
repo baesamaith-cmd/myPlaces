@@ -71,7 +71,7 @@ function extractName(lines, address, hours, landmarkLine) {
     return /[A-Za-z]{2,}/.test(line) && line.length <= 40;
   });
 
-  return candidates.at(-1) || '';
+  return candidates.length ? candidates[candidates.length - 1] : '';
 }
 
 function inferArea(text) {

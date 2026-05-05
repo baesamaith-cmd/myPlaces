@@ -48,11 +48,11 @@ let selectedGeocodeCandidate = null;
 
 function escapeHtml(value) {
   return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function slugCategory(text) {
@@ -363,8 +363,9 @@ async function handleRunOcr() {
   }
 
   try {
-    setStatus('OCR 실행 중… 이미지에서 텍스트를 읽고 있어요.');
+    setStatus('OCR 실행 중… 이미지에서 텍스트를 읽고 있어요. 첫 실행은 10~30초 정도 걸릴 수 있어요.');
     runOcrButton.disabled = true;
+    await new Promise((resolve) => window.requestAnimationFrame(resolve));
     const rawText = await runOcr(file);
     latestSourceText = rawText.trim();
     const parsed = parseRestaurantFields(rawText);
