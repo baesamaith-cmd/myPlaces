@@ -34,50 +34,40 @@
             <span class="hero-chip">Singapore Food Map</span>
           </div>
 
-          <h1>캡처 한 장으로 맛집을 지도에 저장하세요</h1>
-          <p class="subtitle">
-            인스타 캡처를 OCR로 읽고, 주소를 파싱하고, 지도에 미리보기까지 한 번에.
-            지금은 GitHub Pages에서 돌아가는 초경량 MVP입니다.
-          </p>
+          <h1>맛집 캡처를 바로 지도에 올리기</h1>
+          <p class="subtitle">선택 → OCR → 미리보기.</p>
 
-          <div class="hero-metrics" aria-label="서비스 요약">
-            <div class="metric-card">
-              <span class="metric-label">Flow</span>
-              <strong>OCR → Parse → Map</strong>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">Storage</span>
-              <strong>localStorage MVP</strong>
-            </div>
-          </div>
-        </section>
-
-        <section class="panel upload-panel">
-          <div class="section-title-row">
-            <div>
-              <p class="section-kicker">Capture ingestion</p>
-              <h2>캡처에서 장소 추가</h2>
-            </div>
-            <span class="helper badge-soft">MVP</span>
-          </div>
-
-          <label class="upload-label" for="imageUpload">이미지 업로드</label>
-          <div class="upload-dropzone">
-            <input id="imageUpload" type="file" accept="image/*" />
-            <div class="dropzone-copy">
-              <strong>캡처 이미지를 선택하세요</strong>
-              <p>인스타/블로그/스크린샷 이미지를 올리면 OCR을 시작합니다.</p>
-            </div>
-          </div>
-          <p id="selectedFileName" class="helper-text">선택된 파일이 없습니다.</p>
-
-          <div class="button-row">
+          <div class="quick-actions" aria-label="빠른 실행">
+            <label for="imageUpload" class="secondary-button action-button">
+              캡처 이미지 선택
+            </label>
             <button id="runOcrButton" type="button" class="primary-button">
               OCR 실행
             </button>
             <button id="previewButton" type="button" class="secondary-button">
               지도에 미리보기
             </button>
+          </div>
+
+          <p id="selectedFileName" class="hero-helper-text">선택된 파일이 없습니다.</p>
+        </section>
+
+        <section class="panel upload-panel">
+          <div class="section-title-row">
+            <div>
+              <p class="section-kicker">Capture ingestion</p>
+              <h2>OCR 결과 확인</h2>
+            </div>
+            <span class="helper badge-soft">MVP</span>
+          </div>
+
+          <label class="upload-label" for="imageUpload">이미지 바꾸기</label>
+          <div class="upload-dropzone">
+            <input id="imageUpload" type="file" accept="image/*" />
+            <div class="dropzone-copy">
+              <strong>다른 캡처로 다시 선택</strong>
+              <p>파일을 바꾸면 OCR과 지도 미리보기를 다시 실행할 수 있어요.</p>
+            </div>
           </div>
 
           <p id="ocrStatus" class="status-message" aria-live="polite">

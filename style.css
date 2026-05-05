@@ -131,7 +131,8 @@ button:disabled {
 .list-header,
 .map-badges,
 .meta-row,
-.button-row {
+.button-row,
+.quick-actions {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -184,10 +185,25 @@ button:disabled {
 }
 
 .subtitle {
-  margin: 16px 0 0;
+  margin: 12px 0 0;
   color: var(--text-muted);
   font-size: 15px;
-  line-height: 1.65;
+  line-height: 1.5;
+}
+
+.quick-actions {
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.quick-actions > * {
+  flex: 1 1 140px;
+}
+
+.hero-helper-text {
+  margin: 12px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 .hero-metrics {
@@ -321,7 +337,8 @@ summary:focus-visible {
 }
 
 .primary-button,
-.secondary-button {
+.secondary-button,
+.action-button {
   flex: 1;
   min-height: 46px;
   border-radius: 14px;
@@ -333,6 +350,7 @@ summary:focus-visible {
 
 .primary-button:hover,
 .secondary-button:hover,
+.action-button:hover,
 .place-card:hover,
 .candidate-card:hover {
   transform: translateY(-1px);
@@ -355,7 +373,18 @@ summary:focus-visible {
   color: var(--text-secondary);
 }
 
-.secondary-button:hover {
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.secondary-button:hover,
+.action-button:hover {
   border-color: var(--line);
   background: rgba(255, 255, 255, 0.05);
 }
