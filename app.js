@@ -157,6 +157,10 @@ function clearPreviewMarker() {
   }
 }
 
+function isPlaceCardActionTarget(target) {
+  return Boolean(target?.closest('.place-edit-button, .place-action-link'));
+}
+
 function renderPlaces() {
   const selectedCategory = categoryFilter.value;
   const filteredPlaces =
@@ -239,7 +243,10 @@ function renderPlaces() {
       });
     });
 
-    item.addEventListener('click', () => {
+    item.addEventListener('click', (event) => {
+      if (isPlaceCardActionTarget(event.target)) {
+        return;
+      }
       setActiveCard(item);
       map.flyTo([place.lat, place.lng], 16, {
         duration: 0.8,

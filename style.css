@@ -606,6 +606,8 @@ summary:focus-visible {
 }
 
 .place-edit-button {
+  position: relative;
+  z-index: 2;
   border: 1px solid var(--line-soft);
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-secondary);
@@ -648,6 +650,8 @@ summary:focus-visible {
 }
 
 .place-action-link {
+  position: relative;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;

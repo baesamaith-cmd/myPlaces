@@ -22,3 +22,7 @@ test('saved place cards include Google Maps view, directions, and edit actions',
   assert.match(appJs, /google-maps-icon/, 'saved place card should render a Google Maps icon');
   assert.match(appJs, /place-card-glow/, 'saved place card should use the upgraded premium card shell');
 });
+
+test('saved place cards protect edit and map actions from parent card click handling', () => {
+  assert.match(appJs, /closest\('\.place-edit-button, \.place-action-link'\)/, 'card click handler should ignore action targets');
+});
