@@ -576,6 +576,40 @@ summary:focus-visible {
   font-size: 14px;
 }
 
+.place-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.place-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent));
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 10px 24px rgba(94, 106, 210, 0.22);
+  transition: transform 0.16s ease, opacity 0.16s ease, background 0.16s ease;
+}
+
+.place-action-link.secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  border: 1px solid var(--line-soft);
+  box-shadow: none;
+}
+
+.place-action-link:hover {
+  transform: translateY(-1px);
+}
+
 .map-panel {
   min-width: 0;
 }

@@ -1,4 +1,5 @@
 import { buildPlaceRecord, parseRestaurantFields } from './parser.js';
+import { buildPlaceActionLinks } from './map-links.js';
 import { parseImportedPlaces, serializePlaces } from './storage-transfer.js';
 
 const STORAGE_KEY = 'myPlaces.userPlaces.v1';
@@ -139,6 +140,7 @@ function renderPlaces() {
 
   filteredPlaces.forEach((place) => {
     const marker = L.marker([place.lat, place.lng]).addTo(map);
+    const actionLinks = buildPlaceActionLinks(place);
     marker.bindPopup(`
       <div>
         <h3 class="popup-title">${escapeHtml(place.name)}</h3>
@@ -157,6 +159,24 @@ function renderPlaces() {
         <span class="badge">${escapeHtml(place.area || 'Singapore')}</span>
       </div>
       <p>${escapeHtml(buildDescription(place))}</p>
+      <div class="place-actions">
+        <a
+          class="place-action-link"
+          href="${escapeHtml(actionLinks.viewUrl)}"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          구글맵에서 보기
+        </a>
+        <a
+          class="place-action-link secondary"
+          href="${escapeHtml(actionLinks.directionsUrl)}"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          길찾기
+        </a>
+      </div>
     `;
 
     item.addEventListener('click', () => {
