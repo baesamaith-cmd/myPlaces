@@ -365,6 +365,30 @@ summary:focus-visible {
   margin-top: 14px;
 }
 
+.storage-tools {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.storage-row {
+  margin-bottom: 12px;
+}
+
+.import-label {
+  margin-top: 14px;
+}
+
+.compact-dropzone {
+  border-style: solid;
+  border-color: var(--line-soft);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.compact-copy {
+  padding: 14px 16px;
+}
+
 .status-message {
   margin: 14px 0 0;
   padding: 12px 14px;

@@ -1,4 +1,5 @@
 import { buildPlaceRecord, parseRestaurantFields } from './parser.js';
+import { parseImportedPlaces, serializePlaces } from './storage-transfer.js';
 
 const STORAGE_KEY = 'myPlaces.userPlaces.v1';
 const DEFAULT_CENTER = [1.3521, 103.8198];
@@ -18,6 +19,9 @@ const imageUpload = document.getElementById('imageUpload');
 const runOcrButton = document.getElementById('runOcrButton');
 const previewButton = document.getElementById('previewButton');
 const saveParsedPlaceButton = document.getElementById('saveParsedPlace');
+const exportJsonButton = document.getElementById('exportJsonButton');
+const importJsonInput = document.getElementById('importJsonInput');
+const importJsonButton = document.getElementById('importJsonButton');
 const ocrStatus = document.getElementById('ocrStatus');
 const selectedFileName = document.getElementById('selectedFileName');
 const sourceTextPreview = document.getElementById('sourceTextPreview');
@@ -198,6 +202,21 @@ function loadSavedPlaces() {
 
 function persistSavedPlaces() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(userPlaces));
+}
+
+function buildExportFileName() {
+  const date = new Date().toISOString().slice(0, 10);
+  return `myplaces-export-${date}.json`;
+}
+
+function mergeImportedPlaces(importedPlaces) {
+  const merged = new Map();
+
+  [...importedPlaces, ...userPlaces].forEach((place) => {
+    merged.set(place.id, place);
+  });
+
+  return [...merged.values()];
 }
 
 function updateAllPlaces() {
@@ -508,6 +527,42 @@ function handleSave() {
   setStatus(`'${placeRecord.name}' 저장 완료. localStorage에 보관했어요.`, 'success');
 }
 
+function handleExportJson() {
+  const payload = serializePlaces(userPlaces);
+  const blob = new Blob([payload], { type: 'application/json' });
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.download = buildExportFileName();
+  link.click();
+  URL.revokeObjectURL(blobUrl);
+  setStatus(`JSON 내보내기 완료. 현재 ${userPlaces.length}개 장소를 파일로 저장했어요.`, 'success');
+}
+
+async function handleImportJson() {
+  const [file] = importJsonInput.files;
+  if (!file) {
+    setStatus('먼저 불러올 JSON 파일을 선택해주세요.', 'error');
+    return;
+  }
+
+  try {
+    importJsonButton.disabled = true;
+    const text = await file.text();
+    const importedPlaces = parseImportedPlaces(text);
+    userPlaces = mergeImportedPlaces(importedPlaces);
+    persistSavedPlaces();
+    updateAllPlaces();
+    setStatus(`JSON 불러오기 완료. ${importedPlaces.length}개 장소를 반영했어요.`, 'success');
+    importJsonInput.value = '';
+  } catch (error) {
+    console.error(error);
+    setStatus(`JSON 불러오기 실패: ${error.message}`, 'error');
+  } finally {
+    importJsonButton.disabled = false;
+  }
+}
+
 async function init() {
   try {
     const response = await fetch('./data/restaurants.json');
@@ -533,6 +588,8 @@ imageUpload.addEventListener('change', () => {
 runOcrButton.addEventListener('click', handleRunOcr);
 previewButton.addEventListener('click', handlePreview);
 saveParsedPlaceButton.addEventListener('click', handleSave);
+exportJsonButton.addEventListener('click', handleExportJson);
+importJsonButton.addEventListener('click', handleImportJson);
 categoryFilter.addEventListener('change', renderPlaces);
 
 init();
