@@ -305,42 +305,108 @@ function selectCandidate(index) {
   map.flyTo([lat, lng], 16, { duration: 0.8 });
 }
 
+function uniqueQueries(values) {
+  const seen = new Set();
+  return values.filter((value) => {
+    const normalized = String(value || '').trim();
+    if (!normalized || seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
+}
+
+function buildGeocodeQueries(draft) {
+  const normalizedAddress = String(draft.address || '')
+    .replace(/,\s*#?\d{1,3}-\d{1,4}(?=,|\s|$)/g, '')
+    .replace(/\bRd\b/g, 'Road')
+    .replace(/\bSt\b/g, 'Street')
+    .replace(/\bAve\b/g, 'Avenue')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  const postcodeMatch = normalizedAddress.match(/\b(\d{6})\b/);
+  const postcode = postcodeMatch ? postcodeMatch[1] : '';
+
+  return uniqueQueries([
+    draft.address,
+    normalizedAddress,
+    postcode ? `${postcode} Singapore` : '',
+    [draft.name, normalizedAddress, 'Singapore'].filter(Boolean).join(', '),
+    [draft.name, draft.area, 'Singapore'].filter(Boolean).join(', '),
+    [draft.name, 'Singapore'].filter(Boolean).join(', '),
+  ]);
+}
+
+async function requestPhotonGeocode(query) {
+  const url = new URL('https://photon.komoot.io/api/');
+  url.searchParams.set('limit', '3');
+  url.searchParams.set('q', query);
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Photon 지오코딩 실패: ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const features = Array.isArray(payload.features) ? payload.features : [];
+
+  return features
+    .map((feature) => {
+      const coordinates = feature?.geometry?.coordinates || [];
+      const props = feature?.properties || {};
+      const lng = Number(coordinates[0]);
+      const lat = Number(coordinates[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+      const displayName = [
+        props.name,
+        props.street && props.housenumber ? `${props.housenumber} ${props.street}` : props.street,
+        props.locality,
+        props.district,
+        props.city,
+        props.postcode,
+      ]
+        .filter(Boolean)
+        .join(', ');
+
+      return {
+        lat,
+        lng,
+        displayName: displayName || query,
+        geocodeSource: 'photon',
+      };
+    })
+    .filter(Boolean);
+}
+
 async function geocodeDraft(draft) {
-  const queries = [draft.address, [draft.name, draft.area, 'Singapore'].filter(Boolean).join(', ')].filter(Boolean);
+  const queries = buildGeocodeQueries(draft);
   const seen = new Set();
   const results = [];
+  const providerErrors = [];
 
   for (const query of queries) {
-    const url = new URL('https://nominatim.openstreetmap.org/search');
-    url.searchParams.set('format', 'jsonv2');
-    url.searchParams.set('limit', '3');
-    url.searchParams.set('countrycodes', 'sg');
-    url.searchParams.set('q', query);
-
-    const response = await fetch(url, {
-      headers: {
-        Accept: 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`지오코딩 실패: ${response.status}`);
-    }
-
-    const data = await response.json();
-    data.forEach((item) => {
-      const key = `${item.lat}:${item.lon}:${item.display_name}`;
-      if (seen.has(key)) return;
-      seen.add(key);
-      results.push({
-        lat: Number(item.lat),
-        lng: Number(item.lon),
-        displayName: item.display_name,
-        geocodeSource: 'nominatim',
+    try {
+      const candidates = await requestPhotonGeocode(query);
+      candidates.forEach((item) => {
+        const key = `${item.lat}:${item.lng}:${item.displayName}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        results.push(item);
       });
-    });
+      if (results.length) break;
+    } catch (error) {
+      providerErrors.push(error.message);
+    }
+  }
 
-    if (results.length) break;
+  if (!results.length && providerErrors.length) {
+    throw new Error(providerErrors[providerErrors.length - 1]);
   }
 
   return results.slice(0, 3);
