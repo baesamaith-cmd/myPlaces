@@ -19,6 +19,8 @@ const samplePlaces = [
     distanceNote: '1.6km',
     priceNote: '$4.50',
     geocodeSource: 'photon',
+    createdAt: 1700000000000,
+    updatedAt: 1700000005000,
   },
 ];
 
@@ -33,6 +35,24 @@ test('serializePlaces creates pretty JSON for download', () => {
 test('parseImportedPlaces accepts valid array payloads', () => {
   const parsed = parseImportedPlaces(JSON.stringify(samplePlaces));
   assert.deepEqual(parsed, samplePlaces);
+});
+
+test('parseImportedPlaces backfills missing sync timestamps for legacy exports', () => {
+  const before = Date.now();
+  const parsed = parseImportedPlaces(
+    JSON.stringify([
+      {
+        ...samplePlaces[0],
+        createdAt: undefined,
+        updatedAt: undefined,
+      },
+    ])
+  );
+  const after = Date.now();
+
+  assert.equal(parsed[0].id, samplePlaces[0].id);
+  assert.ok(parsed[0].createdAt >= before && parsed[0].createdAt <= after);
+  assert.equal(parsed[0].updatedAt, parsed[0].createdAt);
 });
 
 test('parseImportedPlaces rejects invalid JSON structures', () => {

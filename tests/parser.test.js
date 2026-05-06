@@ -37,12 +37,14 @@ test('parseRestaurantFields extracts structured restaurant fields from screensho
 });
 
 test('buildPlaceRecord creates a map-ready place object with sensible defaults', () => {
+  const before = Date.now();
   const record = buildPlaceRecord({
     ...parseRestaurantFields(sampleText),
     lat: 1.3381,
     lng: 103.7192,
     geocodeSource: 'mock',
   });
+  const after = Date.now();
 
   assert.equal(record.name, 'JJ Sarawak Noodle');
   assert.equal(record.category, '면요리');
@@ -52,15 +54,21 @@ test('buildPlaceRecord creates a map-ready place object with sensible defaults',
   assert.equal(record.lng, 103.7192);
   assert.match(record.id, /^jj-sarawak-noodle-/);
   assert.equal(record.address, '3 Yung Sheng Rd, 03-127, Singapore 618499');
+  assert.ok(record.createdAt >= before && record.createdAt <= after);
+  assert.equal(record.updatedAt, record.createdAt);
 });
 
-test('buildPlaceRecord preserves an existing id for saved-place edits', () => {
+test('buildPlaceRecord preserves existing sync metadata for saved-place edits', () => {
   const record = buildPlaceRecord({
     id: 'saved-place-1',
     name: 'Edited Place',
     lat: 1.3,
     lng: 103.8,
+    createdAt: 1700000000000,
+    updatedAt: 1700000009999,
   });
 
   assert.equal(record.id, 'saved-place-1');
+  assert.equal(record.createdAt, 1700000000000);
+  assert.equal(record.updatedAt, 1700000009999);
 });

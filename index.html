@@ -181,6 +181,38 @@
               JSON 불러오기
             </button>
           </div>
+
+          <div class="sync-tools">
+            <div class="section-title-row compact-row storage-row">
+              <div>
+                <p class="section-kicker">Cloud sync</p>
+                <h3 class="mini-title">Supabase로 기기 간 동기화</h3>
+              </div>
+            </div>
+            <label for="syncEmailInput">로그인 이메일</label>
+            <input
+              id="syncEmailInput"
+              class="sync-email-input"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              placeholder="name@example.com"
+            />
+            <div class="button-row sync-actions-row">
+              <button id="sendMagicLinkButton" type="button" class="secondary-button">
+                매직링크 보내기
+              </button>
+              <button id="syncNowButton" type="button" class="primary-button">
+                지금 동기화
+              </button>
+            </div>
+            <button id="signOutButton" type="button" class="secondary-button full-width-button">
+              로그아웃
+            </button>
+            <p id="syncStatus" class="status-message" aria-live="polite">
+              config.js에 Supabase 정보를 넣으면 기기 간 동기화를 켤 수 있어요.
+            </p>
+          </div>
         </section>
 
         <section class="panel list-panel">
@@ -218,6 +250,8 @@
       crossorigin=""
     ></script>
     <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./config.js"></script>
     <script type="module" src="./app.js"></script>
   </body>
 </html>

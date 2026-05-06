@@ -296,6 +296,7 @@ input[type='file'] {
 }
 
 .controls select,
+.sync-email-input,
 .form-grid input,
 .form-grid textarea {
   width: 100%;
@@ -311,6 +312,7 @@ input[type='file'] {
 }
 
 .controls select:focus,
+.sync-email-input:focus,
 .form-grid input:focus,
 .form-grid textarea:focus,
 input[type='file']:focus-visible + .dropzone-copy,
@@ -321,6 +323,7 @@ summary:focus-visible {
 }
 
 .controls select:hover,
+.sync-email-input:hover,
 .form-grid input:hover,
 .form-grid textarea:hover {
   border-color: var(--line);
@@ -408,8 +411,18 @@ summary:focus-visible {
   border-top: 1px solid var(--line-soft);
 }
 
+.sync-tools {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+}
+
 .storage-row {
   margin-bottom: 12px;
+}
+
+.sync-actions-row {
+  margin-top: 14px;
 }
 
 .import-label {

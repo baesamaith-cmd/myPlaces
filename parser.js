@@ -128,6 +128,9 @@ export function parseRestaurantFields(rawText = '') {
 
 export function buildPlaceRecord(parsed) {
   const timestamp = Date.now();
+  const createdAt = Number.isFinite(Number(parsed.createdAt)) ? Number(parsed.createdAt) : timestamp;
+  const updatedAt = Number.isFinite(Number(parsed.updatedAt)) ? Number(parsed.updatedAt) : createdAt;
+
   return {
     id: parsed.id || `${slugify(parsed.name || 'place')}-${timestamp}`,
     name: parsed.name || '이름 미확인 장소',
@@ -144,5 +147,7 @@ export function buildPlaceRecord(parsed) {
     distanceNote: parsed.distanceNote || '',
     priceNote: parsed.priceNote || '',
     geocodeSource: parsed.geocodeSource || '',
+    createdAt,
+    updatedAt,
   };
 }

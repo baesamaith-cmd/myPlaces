@@ -1,4 +1,10 @@
 import { buildPlaceRecord, parseRestaurantFields } from './parser.js';
+import {
+  buildSupabaseRows,
+  hydratePlacesFromRows,
+  mergePlacesByUpdatedAt,
+  normalizePlaceTimestamps,
+} from './cloud-sync.js';
 import { buildPlaceActionLinks } from './map-links.js';
 import { parseImportedPlaces, serializePlaces } from './storage-transfer.js';
 import { buildCandidateFromPlace, upsertUserPlace } from './user-place-utils.js';
@@ -24,8 +30,13 @@ const saveParsedPlaceButton = document.getElementById('saveParsedPlace');
 const exportJsonButton = document.getElementById('exportJsonButton');
 const importJsonInput = document.getElementById('importJsonInput');
 const importJsonButton = document.getElementById('importJsonButton');
+const syncEmailInput = document.getElementById('syncEmailInput');
+const sendMagicLinkButton = document.getElementById('sendMagicLinkButton');
+const syncNowButton = document.getElementById('syncNowButton');
+const signOutButton = document.getElementById('signOutButton');
 const cancelEditButton = document.getElementById('cancelEditButton');
 const ocrStatus = document.getElementById('ocrStatus');
+const syncStatus = document.getElementById('syncStatus');
 const selectedFileName = document.getElementById('selectedFileName');
 const sourceTextPreview = document.getElementById('sourceTextPreview');
 const geocodeCandidates = document.getElementById('geocodeCandidates');
@@ -54,6 +65,8 @@ let latestParsedData = null;
 let latestGeocodeCandidates = [];
 let selectedGeocodeCandidate = null;
 let editingPlaceId = null;
+let supabaseClient = null;
+let currentSession = null;
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -90,6 +103,59 @@ function setStatus(message, variant = 'default') {
   ocrStatus.className = 'status-message';
   if (variant !== 'default') {
     ocrStatus.classList.add(variant);
+  }
+}
+
+function setSyncStatus(message, variant = 'default') {
+  syncStatus.textContent = message;
+  syncStatus.className = 'status-message';
+  if (variant !== 'default') {
+    syncStatus.classList.add(variant);
+  }
+}
+
+function getSupabaseConfig() {
+  return window.MYPLACES_SUPABASE_CONFIG || {};
+}
+
+function isSupabaseConfigured() {
+  const { url, anonKey } = getSupabaseConfig();
+  return Boolean(url && anonKey);
+}
+
+function ensureSupabaseClient() {
+  if (supabaseClient) return supabaseClient;
+  if (!isSupabaseConfigured()) return null;
+  if (!window.supabase?.createClient) {
+    throw new Error('Supabase SDK를 불러오지 못했습니다.');
+  }
+
+  const { url, anonKey } = getSupabaseConfig();
+  supabaseClient = window.supabase.createClient(url, anonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
+  return supabaseClient;
+}
+
+function hasCloudSession() {
+  return Boolean(currentSession?.user?.id);
+}
+
+function updateSyncControls() {
+  const configured = isSupabaseConfigured();
+  const signedIn = hasCloudSession();
+
+  syncEmailInput.disabled = !configured || signedIn;
+  sendMagicLinkButton.disabled = !configured || signedIn;
+  syncNowButton.disabled = !configured || !signedIn;
+  signOutButton.disabled = !configured || !signedIn;
+
+  if (signedIn && currentSession?.user?.email) {
+    syncEmailInput.value = currentSession.user.email;
   }
 }
 
@@ -280,7 +346,7 @@ function loadSavedPlaces() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map((place) => normalizePlaceTimestamps(place)) : [];
   } catch (error) {
     console.error(error);
     return [];
@@ -288,7 +354,115 @@ function loadSavedPlaces() {
 }
 
 function persistSavedPlaces() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(userPlaces));
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(userPlaces.map((place) => normalizePlaceTimestamps(place)))
+  );
+}
+
+async function fetchRemotePlaces(userId) {
+  const client = ensureSupabaseClient();
+  if (!client) return [];
+
+  const { data, error } = await client
+    .from('places')
+    .select('id, created_at, updated_at, payload')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`클라우드 장소를 불러오지 못했습니다: ${error.message}`);
+  }
+
+  return hydratePlacesFromRows(data || []);
+}
+
+async function pushPlacesToCloud(userId, places) {
+  const client = ensureSupabaseClient();
+  if (!client || !places.length) return;
+
+  const { error } = await client.from('places').upsert(buildSupabaseRows(userId, places), {
+    onConflict: 'user_id,id',
+  });
+
+  if (error) {
+    throw new Error(`클라우드 저장에 실패했습니다: ${error.message}`);
+  }
+}
+
+async function syncPlacesWithCloud(options = {}) {
+  const { announce = true } = options;
+  const client = ensureSupabaseClient();
+  const userId = currentSession?.user?.id;
+
+  if (!client || !userId) {
+    updateSyncControls();
+    if (announce) {
+      setSyncStatus('로그인하면 Supabase와 기기 간 자동 동기화를 시작할 수 있어요.');
+    }
+    return;
+  }
+
+  syncNowButton.disabled = true;
+  if (announce) {
+    setSyncStatus('클라우드 동기화 중… 다른 기기 데이터와 병합하고 있어요.');
+  }
+
+  try {
+    const remotePlaces = await fetchRemotePlaces(userId);
+    userPlaces = mergePlacesByUpdatedAt(userPlaces, remotePlaces);
+    persistSavedPlaces();
+    updateAllPlaces();
+    await pushPlacesToCloud(userId, userPlaces);
+    setSyncStatus(`클라우드 동기화 완료. ${userPlaces.length}개 장소가 모든 기기에서 같아졌어요.`, 'success');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus(`클라우드 동기화 실패: ${error.message}`, 'error');
+  } finally {
+    updateSyncControls();
+  }
+}
+
+async function restoreCloudSession() {
+  updateSyncControls();
+
+  if (!isSupabaseConfigured()) {
+    setSyncStatus('config.js에 Supabase URL과 anon key를 넣으면 기기 간 자동 동기화를 켤 수 있어요.');
+    return;
+  }
+
+  const client = ensureSupabaseClient();
+  if (!client) {
+    setSyncStatus('Supabase 클라이언트를 만들지 못했습니다.', 'error');
+    return;
+  }
+
+  const { data, error } = await client.auth.getSession();
+  if (error) {
+    throw new Error(`세션을 확인하지 못했습니다: ${error.message}`);
+  }
+
+  currentSession = data.session;
+  updateSyncControls();
+
+  client.auth.onAuthStateChange((_event, session) => {
+    currentSession = session;
+    updateSyncControls();
+    if (session?.user) {
+      setSyncStatus(`${session.user.email || '로그인한 계정'}으로 연결됨. 클라우드와 자동 동기화합니다.`, 'success');
+      void syncPlacesWithCloud();
+    } else {
+      setSyncStatus('로그아웃 상태입니다. 로컬 저장은 계속 되지만 기기 간 동기화는 멈춰 있어요.');
+    }
+  });
+
+  if (currentSession?.user) {
+    setSyncStatus(`${currentSession.user.email || '로그인한 계정'}으로 연결됨. 클라우드와 자동 동기화합니다.`, 'success');
+    await syncPlacesWithCloud({ announce: false });
+    return;
+  }
+
+  setSyncStatus('이메일을 입력하고 매직링크를 받으면 다른 기기에서도 같은 맛집 목록을 바로 불러올 수 있어요.');
 }
 
 function buildExportFileName() {
@@ -297,13 +471,7 @@ function buildExportFileName() {
 }
 
 function mergeImportedPlaces(importedPlaces) {
-  const merged = new Map();
-
-  [...importedPlaces, ...userPlaces].forEach((place) => {
-    merged.set(place.id, place);
-  });
-
-  return [...merged.values()];
+  return mergePlacesByUpdatedAt(userPlaces, importedPlaces);
 }
 
 function updateAllPlaces() {
@@ -602,22 +770,29 @@ function handleSave() {
     return;
   }
 
+  const saveTimestamp = Date.now();
   const placeRecord = buildPlaceRecord({
     ...draft,
     id: editingPlaceId || draft.id,
     lat: selectedGeocodeCandidate.lat,
     lng: selectedGeocodeCandidate.lng,
     geocodeSource: selectedGeocodeCandidate.geocodeSource,
+    createdAt: draft.createdAt,
+    updatedAt: saveTimestamp,
   });
 
-  userPlaces = upsertUserPlace(userPlaces, placeRecord);
+  userPlaces = upsertUserPlace(userPlaces, placeRecord).map((place) => normalizePlaceTimestamps(place));
   persistSavedPlaces();
   updateAllPlaces();
   const message = editingPlaceId
     ? `'${placeRecord.name}' 수정 완료. 저장된 장소 정보를 업데이트했어요.`
-    : `'${placeRecord.name}' 저장 완료. localStorage에 보관했어요.`;
+    : `'${placeRecord.name}' 저장 완료. 이 기기에 바로 보관했어요.`;
   stopEditingPlace();
   setStatus(message, 'success');
+
+  if (hasCloudSession()) {
+    void syncPlacesWithCloud({ announce: true });
+  }
 }
 
 function handleExportJson() {
@@ -643,16 +818,85 @@ async function handleImportJson() {
     importJsonButton.disabled = true;
     const text = await file.text();
     const importedPlaces = parseImportedPlaces(text);
-    userPlaces = mergeImportedPlaces(importedPlaces);
+    userPlaces = mergeImportedPlaces(importedPlaces).map((place) => normalizePlaceTimestamps(place));
     persistSavedPlaces();
     updateAllPlaces();
     setStatus(`JSON 불러오기 완료. ${importedPlaces.length}개 장소를 반영했어요.`, 'success');
     importJsonInput.value = '';
+
+    if (hasCloudSession()) {
+      void syncPlacesWithCloud({ announce: true });
+    }
   } catch (error) {
     console.error(error);
     setStatus(`JSON 불러오기 실패: ${error.message}`, 'error');
   } finally {
     importJsonButton.disabled = false;
+  }
+}
+
+async function handleSendMagicLink() {
+  const email = syncEmailInput.value.trim();
+  if (!email) {
+    setSyncStatus('먼저 로그인할 이메일 주소를 입력해주세요.', 'error');
+    return;
+  }
+
+  try {
+    const client = ensureSupabaseClient();
+    if (!client) {
+      setSyncStatus('config.js에 Supabase URL과 anon key를 먼저 넣어주세요.', 'error');
+      return;
+    }
+
+    sendMagicLinkButton.disabled = true;
+    const redirectTo = window.location.href.split('#')[0];
+    const { error } = await client.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: redirectTo,
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    setSyncStatus('매직링크를 이메일로 보냈어요. 링크를 연 기기에서 바로 같은 맛집 목록을 불러옵니다.', 'success');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus(`매직링크 전송 실패: ${error.message}`, 'error');
+  } finally {
+    updateSyncControls();
+  }
+}
+
+async function handleSyncNow() {
+  await syncPlacesWithCloud({ announce: true });
+}
+
+async function handleSignOut() {
+  try {
+    const client = ensureSupabaseClient();
+    if (!client) {
+      setSyncStatus('아직 Supabase가 설정되지 않았어요.');
+      return;
+    }
+
+    signOutButton.disabled = true;
+    const { error } = await client.auth.signOut();
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    currentSession = null;
+    updateSyncControls();
+    setSyncStatus('로그아웃했어요. 현재 기기 localStorage는 남아 있고 클라우드 동기화만 멈췄어요.');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus(`로그아웃 실패: ${error.message}`, 'error');
+  } finally {
+    updateSyncControls();
   }
 }
 
@@ -671,6 +915,15 @@ async function init() {
     console.error(error);
     placeList.innerHTML = '<li class="place-card">데이터를 불러오지 못했습니다.</li>';
     setStatus('초기 데이터를 불러오지 못했습니다.', 'error');
+    setSyncStatus('로컬 데이터 초기화가 먼저 실패했어요.', 'error');
+    return;
+  }
+
+  try {
+    await restoreCloudSession();
+  } catch (error) {
+    console.error(error);
+    setSyncStatus('클라우드 초기화에 실패했어요. README의 Supabase 설정을 다시 확인해주세요.', 'error');
   }
 }
 
@@ -689,6 +942,9 @@ previewButton.addEventListener('click', handlePreview);
 saveParsedPlaceButton.addEventListener('click', handleSave);
 exportJsonButton.addEventListener('click', handleExportJson);
 importJsonButton.addEventListener('click', handleImportJson);
+sendMagicLinkButton.addEventListener('click', handleSendMagicLink);
+syncNowButton.addEventListener('click', handleSyncNow);
+signOutButton.addEventListener('click', handleSignOut);
 categoryFilter.addEventListener('change', renderPlaces);
 
 init();

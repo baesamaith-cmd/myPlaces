@@ -27,9 +27,20 @@ export function parseImportedPlaces(text = '') {
 
   return parsed
     .filter(isValidPlaceRecord)
-    .map((place) => ({
-      ...place,
-      lat: Number(place.lat),
-      lng: Number(place.lng),
-    }));
+    .map((place) => {
+      const createdAt = Number.isFinite(Number(place.createdAt))
+        ? Number(place.createdAt)
+        : Number.isFinite(Number(place.updatedAt))
+          ? Number(place.updatedAt)
+          : Date.now();
+      const updatedAt = Number.isFinite(Number(place.updatedAt)) ? Number(place.updatedAt) : createdAt;
+
+      return {
+        ...place,
+        lat: Number(place.lat),
+        lng: Number(place.lng),
+        createdAt,
+        updatedAt,
+      };
+    });
 }

@@ -15,6 +15,15 @@ test('index exposes three primary quick actions at the top of the sidebar', () =
   assert.match(heroSection[1], /id="previewButton"[^>]*>\s*지도에 미리보기\s*</, 'preview action should be visible at top');
 });
 
+test('index exposes Supabase sync controls for cross-device saving', () => {
+  assert.match(html, /Cloud sync/, 'sync panel title should exist');
+  assert.match(html, /id="syncEmailInput"/, 'email input should exist for magic link sign-in');
+  assert.match(html, /id="sendMagicLinkButton"/, 'magic link button should exist');
+  assert.match(html, /id="syncNowButton"/, 'manual sync button should exist');
+  assert.match(html, /id="signOutButton"/, 'sign out button should exist');
+  assert.match(html, /src="\.\/config\.js"/, 'config.js should load before app.js');
+});
+
 test('saved place cards include Google Maps view, directions, and edit actions', () => {
   assert.match(appJs, /구글맵에서 보기/, 'saved place card should expose Google Maps view action');
   assert.match(appJs, /길찾기/, 'saved place card should expose directions action');
