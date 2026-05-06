@@ -44,7 +44,10 @@ GitHub Pages에서 바로 배포할 수 있는 정적 지도 MVP입니다.
 `supabase/schema.sql` 내용을 붙여 넣고 실행합니다.
 
 ### 3) 브라우저 공개 키 설정
-`config.example.js`를 참고해 `config.js`를 실제 값으로 채웁니다.
+두 가지 방식 중 하나를 쓰면 됩니다.
+
+#### 방식 A) 로컬 개발 / 빠른 테스트
+`config.example.js`를 참고해 `config.js`를 직접 채웁니다.
 
 ```js
 window.MYPLACES_SUPABASE_CONFIG = {
@@ -53,10 +56,17 @@ window.MYPLACES_SUPABASE_CONFIG = {
 };
 ```
 
+#### 방식 B) GitHub Pages 배포용 권장 방식
+이 저장소에는 `.github/workflows/deploy-pages.yml`이 들어 있어서, GitHub Actions가 배포 시 `config.template.js`에서 `config.js`를 자동 생성합니다.
+
+GitHub 저장소 **Settings → Secrets and variables → Actions → Variables** 에 아래 두 개를 추가하세요.
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+
 ### 4) 중요한 주의사항
 - `anonKey`는 **브라우저에 공개되는 키**라서 정상입니다.
 - 대신 **service_role key는 절대 넣으면 안 됩니다.**
-- GitHub Pages에 올릴 때도 `config.js`에는 `anonKey`만 넣으세요.
+- 배포 자동화를 써도 `SUPABASE_ANON_KEY`에는 anon key만 넣으세요.
 
 ### 5) 동작 방식
 - 로그인 전: 기존처럼 localStorage 저장만 사용
@@ -82,9 +92,10 @@ node --check config.example.js
 GitHub Pages를 켜면 바로 웹으로 공개할 수 있습니다.
 
 배포 전에 확인할 것:
-- `config.js`에 실제 Supabase URL / anon key 반영
 - `supabase/schema.sql` 실행 완료
 - 이메일 로그인 공급자 활성화
+- GitHub Actions Variables에 `SUPABASE_URL`, `SUPABASE_ANON_KEY` 추가
+- 필요하면 GitHub Pages source를 **GitHub Actions** 로 전환
 
 ## 다음 단계 아이디어
 - 저장된 장소 삭제
