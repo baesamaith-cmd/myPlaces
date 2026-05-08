@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildCandidateFromPlace, upsertUserPlace } from '../user-place-utils.js';
+import {
+  buildCandidateFromPlace,
+  upsertUserPlace,
+  removeUserPlace,
+  findDuplicatePlace,
+} from '../user-place-utils.js';
 
 test('upsertUserPlace prepends new records', () => {
   const places = [{ id: 'old-1', name: 'Old Place' }];
@@ -28,6 +33,53 @@ test('upsertUserPlace replaces an existing record with the same id', () => {
     { id: 'same-1', name: 'Updated Title', area: 'Tiong Bahru' },
     { id: 'other-1', name: 'Another Place' },
   ]);
+});
+
+test('removeUserPlace removes a place by id', () => {
+  const places = [
+    { id: 'same-1', name: 'Old Title' },
+    { id: 'other-1', name: 'Another Place' },
+  ];
+
+  assert.deepEqual(removeUserPlace(places, 'same-1'), [
+    { id: 'other-1', name: 'Another Place' },
+  ]);
+});
+
+test('findDuplicatePlace matches same normalized name and address even with spacing/case differences', () => {
+  const places = [
+    {
+      id: 'jj-1',
+      name: 'JJ Sarawak Noodle',
+      address: '3 Yung Sheng Rd, Singapore 618499',
+    },
+  ];
+
+  const duplicate = findDuplicatePlace(places, {
+    id: 'candidate-1',
+    name: '  jj sarawak noodle ',
+    address: '3 YUNG SHENG RD Singapore 618499',
+  });
+
+  assert.equal(duplicate?.id, 'jj-1');
+});
+
+test('findDuplicatePlace ignores the currently edited place id', () => {
+  const places = [
+    {
+      id: 'jj-1',
+      name: 'JJ Sarawak Noodle',
+      address: '3 Yung Sheng Rd, Singapore 618499',
+    },
+  ];
+
+  const duplicate = findDuplicatePlace(places, {
+    id: 'jj-1',
+    name: 'JJ Sarawak Noodle',
+    address: '3 Yung Sheng Rd, Singapore 618499',
+  });
+
+  assert.equal(duplicate, null);
 });
 
 test('buildCandidateFromPlace creates a reusable preview candidate from a saved place', () => {

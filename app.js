@@ -6,7 +6,7 @@ import {
   normalizePlaceTimestamps,
 } from './cloud-sync.js';
 import { buildPlaceActionLinks } from './map-links.js';
-import { buildCandidateFromPlace, upsertUserPlace } from './user-place-utils.js';
+import { buildCandidateFromPlace, findDuplicatePlace, removeUserPlace, upsertUserPlace } from './user-place-utils.js';
 
 const STORAGE_KEY = 'myPlaces.userPlaces.v1';
 const DEFAULT_CENTER = [1.3521, 103.8198];
@@ -171,7 +171,7 @@ function clearPreviewMarker() {
 }
 
 function isPlaceCardActionTarget(target) {
-  return Boolean(target?.closest('.place-edit-button, .place-action-link'));
+  return Boolean(target?.closest('.place-edit-button, .place-delete-button, .place-action-link'));
 }
 
 function renderPlaces() {
@@ -205,7 +205,10 @@ function renderPlaces() {
           <h3>${escapeHtml(place.name)}</h3>
           <p class="place-card-address">${escapeHtml(place.address || '주소 정보 없음')}</p>
         </div>
-        <button type="button" class="place-edit-button">수정하기</button>
+        <div class="place-card-head-actions">
+          <button type="button" class="place-edit-button">수정하기</button>
+          <button type="button" class="place-delete-button">삭제하기</button>
+        </div>
       </div>
       <p>${escapeHtml(place.reason || '저장 이유 없음')}</p>
       <div class="place-actions">
@@ -240,6 +243,12 @@ function renderPlaces() {
     editButton?.addEventListener('click', (event) => {
       event.stopPropagation();
       startEditingPlace(place);
+    });
+
+    const deleteButton = item.querySelector('.place-delete-button');
+    deleteButton?.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      await handleDeletePlace(place);
     });
 
     item.querySelectorAll('a').forEach((link) => {
@@ -325,6 +334,17 @@ async function pushPlacesToCloud(places) {
 
   if (error) {
     throw new Error(`공용 저장소 저장에 실패했습니다: ${error.message}`);
+  }
+}
+
+async function deletePlaceFromCloud(placeId) {
+  const client = ensureSupabaseClient();
+  if (!client) return;
+
+  const { error } = await client.from('shared_places').delete().eq('id', placeId);
+
+  if (error) {
+    throw new Error(`공용 저장소 삭제에 실패했습니다: ${error.message}`);
   }
 }
 
@@ -668,6 +688,12 @@ function handleSave() {
     updatedAt: saveTimestamp,
   });
 
+  const duplicatePlace = findDuplicatePlace(userPlaces, placeRecord);
+  if (duplicatePlace) {
+    setStatus(`이미 저장된 장소예요: '${duplicatePlace.name}'. 기존 항목을 수정하거나 삭제해주세요.`, 'error');
+    return;
+  }
+
   userPlaces = upsertUserPlace(userPlaces, placeRecord).map((place) => normalizePlaceTimestamps(place));
   persistSavedPlaces();
   updateAllPlaces();
@@ -679,6 +705,33 @@ function handleSave() {
 
   if (isSupabaseConfigured()) {
     void syncPlacesWithCloud({ announce: true });
+  }
+}
+
+async function handleDeletePlace(place) {
+  const confirmed = window.confirm(`'${place.name}'을(를) 삭제할까요?`);
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    if (editingPlaceId === place.id) {
+      stopEditingPlace();
+    }
+
+    userPlaces = removeUserPlace(userPlaces, place.id).map((item) => normalizePlaceTimestamps(item));
+    persistSavedPlaces();
+    updateAllPlaces();
+
+    if (isSupabaseConfigured()) {
+      await deletePlaceFromCloud(place.id);
+    }
+
+    setStatus(`'${place.name}' 삭제 완료.`, 'success');
+  } catch (error) {
+    console.error(error);
+    setStatus(`삭제 실패: ${error.message}`, 'error');
+    await syncPlacesWithCloud({ announce: false });
   }
 }
 
