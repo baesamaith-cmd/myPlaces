@@ -14,12 +14,11 @@ export function normalizePlaceTimestamps(place = {}, now = Date.now()) {
   };
 }
 
-export function buildSupabaseRows(userId, places = []) {
+export function buildSupabaseRows(places = []) {
   return places.map((place) => {
     const normalized = normalizePlaceTimestamps(place);
 
     return {
-      user_id: userId,
       id: normalized.id,
       created_at: normalized.createdAt,
       updated_at: normalized.updatedAt,

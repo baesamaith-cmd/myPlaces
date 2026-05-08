@@ -15,13 +15,22 @@ test('index exposes three primary quick actions at the top of the sidebar', () =
   assert.match(heroSection[1], /id="previewButton"[^>]*>\s*지도에 미리보기\s*</, 'preview action should be visible at top');
 });
 
-test('index exposes Supabase sync controls for cross-device saving', () => {
-  assert.match(html, /Cloud sync/, 'sync panel title should exist');
-  assert.match(html, /id="syncEmailInput"/, 'email input should exist for magic link sign-in');
-  assert.match(html, /id="sendMagicLinkButton"/, 'magic link button should exist');
-  assert.match(html, /id="syncNowButton"/, 'manual sync button should exist');
-  assert.match(html, /id="signOutButton"/, 'sign out button should exist');
+test('index exposes simplified shared Supabase controls', () => {
+  assert.match(html, /Shared cloud/, 'shared cloud title should exist');
+  assert.match(html, /무료 Supabase 공용 저장소/, 'shared cloud section should describe the free shared store');
+  assert.match(html, /id="syncNowButton"/, 'manual shared sync button should exist');
+  assert.doesNotMatch(html, /id="syncEmailInput"/, 'email auth input should be removed');
+  assert.doesNotMatch(html, /id="sendMagicLinkButton"/, 'magic link button should be removed');
+  assert.doesNotMatch(html, /id="signOutButton"/, 'sign out button should be removed');
   assert.match(html, /src="\.\/config\.js"/, 'config.js should load before app.js');
+});
+
+test('index keeps only name address and reason input fields', () => {
+  assert.match(html, /id="parsedName"/, 'name field should exist');
+  assert.match(html, /id="parsedAddress"/, 'address field should exist');
+  assert.match(html, /id="parsedReason"/, 'reason field should exist');
+  assert.doesNotMatch(html, /id="parsedHours"/, 'hours field should be removed');
+  assert.doesNotMatch(html, /id="parsedCategory"/, 'category field should be removed');
 });
 
 test('saved place cards include Google Maps view, directions, and edit actions', () => {

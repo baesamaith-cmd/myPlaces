@@ -30,10 +30,7 @@ const saveParsedPlaceButton = document.getElementById('saveParsedPlace');
 const exportJsonButton = document.getElementById('exportJsonButton');
 const importJsonInput = document.getElementById('importJsonInput');
 const importJsonButton = document.getElementById('importJsonButton');
-const syncEmailInput = document.getElementById('syncEmailInput');
-const sendMagicLinkButton = document.getElementById('sendMagicLinkButton');
 const syncNowButton = document.getElementById('syncNowButton');
-const signOutButton = document.getElementById('signOutButton');
 const cancelEditButton = document.getElementById('cancelEditButton');
 const ocrStatus = document.getElementById('ocrStatus');
 const syncStatus = document.getElementById('syncStatus');
@@ -45,13 +42,7 @@ const editModeHint = document.getElementById('editModeHint');
 const fieldRefs = {
   name: document.getElementById('parsedName'),
   address: document.getElementById('parsedAddress'),
-  hours: document.getElementById('parsedHours'),
-  category: document.getElementById('parsedCategory'),
-  nearestLandmark: document.getElementById('parsedLandmark'),
-  distanceNote: document.getElementById('parsedDistanceNote'),
-  priceNote: document.getElementById('parsedPriceNote'),
-  area: document.getElementById('parsedArea'),
-  description: document.getElementById('parsedDescription'),
+  reason: document.getElementById('parsedReason'),
 };
 
 const markers = [];
@@ -66,7 +57,6 @@ let latestGeocodeCandidates = [];
 let selectedGeocodeCandidate = null;
 let editingPlaceId = null;
 let supabaseClient = null;
-let currentSession = null;
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -77,24 +67,10 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function slugCategory(text) {
-  const value = `${text || ''}`.trim();
-  return value || '기타';
-}
-
-function inferCategoryFromForm(name, description) {
-  const text = `${name} ${description}`.toLowerCase();
-  if (/mee|noodle|ramen|면/.test(text)) return '면요리';
-  if (/coffee|cafe|bakery|카페/.test(text)) return '카페';
-  if (/bbq|bar|cocktail|bar\//.test(text)) return '바/다이닝';
-  return '맛집';
-}
-
 function buildDescription(place) {
-  const fragments = [place.description];
+  const fragments = [];
+  if (place.reason) fragments.push(place.reason);
   if (place.address) fragments.push(`주소: ${place.address}`);
-  if (place.hours) fragments.push(`영업시간: ${place.hours}`);
-  if (place.priceNote) fragments.push(`가격: ${place.priceNote}`);
   return fragments.filter(Boolean).join(' · ');
 }
 
@@ -141,22 +117,9 @@ function ensureSupabaseClient() {
   return supabaseClient;
 }
 
-function hasCloudSession() {
-  return Boolean(currentSession?.user?.id);
-}
-
 function updateSyncControls() {
   const configured = isSupabaseConfigured();
-  const signedIn = hasCloudSession();
-
-  syncEmailInput.disabled = !configured || signedIn;
-  sendMagicLinkButton.disabled = !configured || signedIn;
-  syncNowButton.disabled = !configured || !signedIn;
-  signOutButton.disabled = !configured || !signedIn;
-
-  if (signedIn && currentSession?.user?.email) {
-    syncEmailInput.value = currentSession.user.email;
-  }
+  syncNowButton.disabled = !configured;
 }
 
 function updateFormMode() {
@@ -200,20 +163,8 @@ function clearMarkers() {
 }
 
 function renderCategories(places) {
-  const currentValue = categoryFilter.value;
-  const categories = [...new Set(places.map((place) => slugCategory(place.category)))].sort();
   categoryFilter.innerHTML = '<option value="all">전체</option>';
-
-  categories.forEach((category) => {
-    const option = document.createElement('option');
-    option.value = category;
-    option.textContent = category;
-    categoryFilter.appendChild(option);
-  });
-
-  if (categories.includes(currentValue)) {
-    categoryFilter.value = currentValue;
-  }
+  categoryFilter.value = 'all';
 }
 
 function clearPreviewMarker() {
@@ -228,11 +179,7 @@ function isPlaceCardActionTarget(target) {
 }
 
 function renderPlaces() {
-  const selectedCategory = categoryFilter.value;
-  const filteredPlaces =
-    selectedCategory === 'all'
-      ? allPlaces
-      : allPlaces.filter((place) => slugCategory(place.category) === selectedCategory);
+  const filteredPlaces = allPlaces;
 
   placeCount.textContent = `${filteredPlaces.length}개`;
   placeList.innerHTML = '';
@@ -264,11 +211,7 @@ function renderPlaces() {
         </div>
         <button type="button" class="place-edit-button">수정하기</button>
       </div>
-      <div class="meta-row place-meta-row">
-        <span class="badge">${escapeHtml(slugCategory(place.category))}</span>
-        <span class="badge">${escapeHtml(place.area || 'Singapore')}</span>
-      </div>
-      <p>${escapeHtml(buildDescription(place))}</p>
+      <p>${escapeHtml(place.reason || '저장 이유 없음')}</p>
       <div class="place-actions">
         <a
           class="place-action-link"
@@ -360,64 +303,62 @@ function persistSavedPlaces() {
   );
 }
 
-async function fetchRemotePlaces(userId) {
+async function fetchRemotePlaces() {
   const client = ensureSupabaseClient();
   if (!client) return [];
 
   const { data, error } = await client
-    .from('places')
+    .from('shared_places')
     .select('id, created_at, updated_at, payload')
-    .eq('user_id', userId)
     .order('updated_at', { ascending: false });
 
   if (error) {
-    throw new Error(`클라우드 장소를 불러오지 못했습니다: ${error.message}`);
+    throw new Error(`공용 저장소를 불러오지 못했습니다: ${error.message}`);
   }
 
   return hydratePlacesFromRows(data || []);
 }
 
-async function pushPlacesToCloud(userId, places) {
+async function pushPlacesToCloud(places) {
   const client = ensureSupabaseClient();
   if (!client || !places.length) return;
 
-  const { error } = await client.from('places').upsert(buildSupabaseRows(userId, places), {
-    onConflict: 'user_id,id',
+  const { error } = await client.from('shared_places').upsert(buildSupabaseRows(places), {
+    onConflict: 'id',
   });
 
   if (error) {
-    throw new Error(`클라우드 저장에 실패했습니다: ${error.message}`);
+    throw new Error(`공용 저장소 저장에 실패했습니다: ${error.message}`);
   }
 }
 
 async function syncPlacesWithCloud(options = {}) {
   const { announce = true } = options;
   const client = ensureSupabaseClient();
-  const userId = currentSession?.user?.id;
 
-  if (!client || !userId) {
+  if (!client) {
     updateSyncControls();
     if (announce) {
-      setSyncStatus('로그인하면 Supabase와 기기 간 자동 동기화를 시작할 수 있어요.');
+      setSyncStatus('config.js에 Supabase URL과 anon key를 넣으면 여러 사람이 함께 쓰는 공용 저장소를 켤 수 있어요.');
     }
     return;
   }
 
   syncNowButton.disabled = true;
   if (announce) {
-    setSyncStatus('클라우드 동기화 중… 다른 기기 데이터와 병합하고 있어요.');
+    setSyncStatus('공용 저장소와 동기화 중… 다른 사람이 저장한 장소를 합치고 있어요.');
   }
 
   try {
-    const remotePlaces = await fetchRemotePlaces(userId);
+    const remotePlaces = await fetchRemotePlaces();
     userPlaces = mergePlacesByUpdatedAt(userPlaces, remotePlaces);
     persistSavedPlaces();
     updateAllPlaces();
-    await pushPlacesToCloud(userId, userPlaces);
-    setSyncStatus(`클라우드 동기화 완료. ${userPlaces.length}개 장소가 모든 기기에서 같아졌어요.`, 'success');
+    await pushPlacesToCloud(userPlaces);
+    setSyncStatus(`공용 저장소 동기화 완료. 현재 ${userPlaces.length}개 장소가 함께 공유되고 있어요.`, 'success');
   } catch (error) {
     console.error(error);
-    setSyncStatus(`클라우드 동기화 실패: ${error.message}`, 'error');
+    setSyncStatus(`공용 저장소 동기화 실패: ${error.message}`, 'error');
   } finally {
     updateSyncControls();
   }
@@ -427,7 +368,7 @@ async function restoreCloudSession() {
   updateSyncControls();
 
   if (!isSupabaseConfigured()) {
-    setSyncStatus('config.js에 Supabase URL과 anon key를 넣으면 기기 간 자동 동기화를 켤 수 있어요.');
+    setSyncStatus('config.js에 Supabase URL과 anon key를 넣으면 여러 사람이 같은 맛집 목록을 함께 볼 수 있어요.');
     return;
   }
 
@@ -437,32 +378,8 @@ async function restoreCloudSession() {
     return;
   }
 
-  const { data, error } = await client.auth.getSession();
-  if (error) {
-    throw new Error(`세션을 확인하지 못했습니다: ${error.message}`);
-  }
-
-  currentSession = data.session;
-  updateSyncControls();
-
-  client.auth.onAuthStateChange((_event, session) => {
-    currentSession = session;
-    updateSyncControls();
-    if (session?.user) {
-      setSyncStatus(`${session.user.email || '로그인한 계정'}으로 연결됨. 클라우드와 자동 동기화합니다.`, 'success');
-      void syncPlacesWithCloud();
-    } else {
-      setSyncStatus('로그아웃 상태입니다. 로컬 저장은 계속 되지만 기기 간 동기화는 멈춰 있어요.');
-    }
-  });
-
-  if (currentSession?.user) {
-    setSyncStatus(`${currentSession.user.email || '로그인한 계정'}으로 연결됨. 클라우드와 자동 동기화합니다.`, 'success');
-    await syncPlacesWithCloud({ announce: false });
-    return;
-  }
-
-  setSyncStatus('이메일을 입력하고 매직링크를 받으면 다른 기기에서도 같은 맛집 목록을 바로 불러올 수 있어요.');
+  setSyncStatus('공용 저장소에 연결했어요. 페이지를 열면 자동으로 최신 목록을 받아옵니다.', 'success');
+  await syncPlacesWithCloud({ announce: false });
 }
 
 function buildExportFileName() {
@@ -483,30 +400,15 @@ function updateAllPlaces() {
 function populateForm(parsed) {
   fieldRefs.name.value = parsed.name || '';
   fieldRefs.address.value = parsed.address || '';
-  fieldRefs.hours.value = parsed.hours || '';
-  fieldRefs.category.value = parsed.category || inferCategoryFromForm(parsed.name, parsed.description);
-  fieldRefs.nearestLandmark.value = parsed.nearestLandmark || '';
-  fieldRefs.distanceNote.value = parsed.distanceNote || '';
-  fieldRefs.priceNote.value = parsed.priceNote || '';
-  fieldRefs.area.value = parsed.area || 'Singapore';
-  fieldRefs.description.value = parsed.description || '';
+  fieldRefs.reason.value = parsed.reason || '';
 }
 
 function readFormDraft() {
-  const name = fieldRefs.name.value.trim();
-  const description = fieldRefs.description.value.trim();
-
   return {
     ...latestParsedData,
-    name,
+    name: fieldRefs.name.value.trim(),
     address: fieldRefs.address.value.trim(),
-    hours: fieldRefs.hours.value.trim(),
-    category: fieldRefs.category.value.trim() || inferCategoryFromForm(name, description),
-    nearestLandmark: fieldRefs.nearestLandmark.value.trim(),
-    distanceNote: fieldRefs.distanceNote.value.trim(),
-    priceNote: fieldRefs.priceNote.value.trim(),
-    area: fieldRefs.area.value.trim() || 'Singapore',
-    description,
+    reason: fieldRefs.reason.value.trim(),
     sourceText: latestSourceText || latestParsedData?.sourceText || '',
     sourceType: latestParsedData?.sourceType || 'image',
   };
@@ -616,7 +518,6 @@ function buildGeocodeQueries(draft) {
     normalizedAddress,
     postcode ? `${postcode} Singapore` : '',
     [draft.name, normalizedAddress, 'Singapore'].filter(Boolean).join(', '),
-    [draft.name, draft.area, 'Singapore'].filter(Boolean).join(', '),
     [draft.name, 'Singapore'].filter(Boolean).join(', '),
   ]);
 }
@@ -720,7 +621,6 @@ async function handleRunOcr() {
     const rawText = await runOcr(file);
     latestSourceText = rawText.trim();
     const parsed = parseRestaurantFields(rawText);
-    parsed.category = inferCategoryFromForm(parsed.name, parsed.description);
     latestParsedData = parsed;
     populateForm(parsed);
     sourceTextPreview.textContent = parsed.sourceText || '텍스트를 추출하지 못했습니다.';
@@ -785,12 +685,12 @@ function handleSave() {
   persistSavedPlaces();
   updateAllPlaces();
   const message = editingPlaceId
-    ? `'${placeRecord.name}' 수정 완료. 저장된 장소 정보를 업데이트했어요.`
-    : `'${placeRecord.name}' 저장 완료. 이 기기에 바로 보관했어요.`;
+    ? `'${placeRecord.name}' 수정 완료. 공용 목록에 반영할 준비가 됐어요.`
+    : `'${placeRecord.name}' 저장 완료. 이 기기와 공용 목록에 반영할게요.`;
   stopEditingPlace();
   setStatus(message, 'success');
 
-  if (hasCloudSession()) {
+  if (isSupabaseConfigured()) {
     void syncPlacesWithCloud({ announce: true });
   }
 }
@@ -824,7 +724,7 @@ async function handleImportJson() {
     setStatus(`JSON 불러오기 완료. ${importedPlaces.length}개 장소를 반영했어요.`, 'success');
     importJsonInput.value = '';
 
-    if (hasCloudSession()) {
+    if (isSupabaseConfigured()) {
       void syncPlacesWithCloud({ announce: true });
     }
   } catch (error) {
@@ -835,79 +735,13 @@ async function handleImportJson() {
   }
 }
 
-async function handleSendMagicLink() {
-  const email = syncEmailInput.value.trim();
-  if (!email) {
-    setSyncStatus('먼저 로그인할 이메일 주소를 입력해주세요.', 'error');
-    return;
-  }
-
-  try {
-    const client = ensureSupabaseClient();
-    if (!client) {
-      setSyncStatus('config.js에 Supabase URL과 anon key를 먼저 넣어주세요.', 'error');
-      return;
-    }
-
-    sendMagicLinkButton.disabled = true;
-    const redirectTo = window.location.href.split('#')[0];
-    const { error } = await client.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: redirectTo,
-      },
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    setSyncStatus('매직링크를 이메일로 보냈어요. 링크를 연 기기에서 바로 같은 맛집 목록을 불러옵니다.', 'success');
-  } catch (error) {
-    console.error(error);
-    setSyncStatus(`매직링크 전송 실패: ${error.message}`, 'error');
-  } finally {
-    updateSyncControls();
-  }
-}
-
 async function handleSyncNow() {
   await syncPlacesWithCloud({ announce: true });
 }
 
-async function handleSignOut() {
-  try {
-    const client = ensureSupabaseClient();
-    if (!client) {
-      setSyncStatus('아직 Supabase가 설정되지 않았어요.');
-      return;
-    }
-
-    signOutButton.disabled = true;
-    const { error } = await client.auth.signOut();
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    currentSession = null;
-    updateSyncControls();
-    setSyncStatus('로그아웃했어요. 현재 기기 localStorage는 남아 있고 클라우드 동기화만 멈췄어요.');
-  } catch (error) {
-    console.error(error);
-    setSyncStatus(`로그아웃 실패: ${error.message}`, 'error');
-  } finally {
-    updateSyncControls();
-  }
-}
-
 async function init() {
   try {
-    const response = await fetch('./data/restaurants.json');
-    if (!response.ok) {
-      throw new Error(`데이터를 불러오지 못했습니다: ${response.status}`);
-    }
-
-    seedPlaces = await response.json();
+    seedPlaces = [];
     userPlaces = loadSavedPlaces();
     updateFormMode();
     updateAllPlaces();
@@ -923,7 +757,7 @@ async function init() {
     await restoreCloudSession();
   } catch (error) {
     console.error(error);
-    setSyncStatus('클라우드 초기화에 실패했어요. README의 Supabase 설정을 다시 확인해주세요.', 'error');
+    setSyncStatus('공용 저장소 초기화에 실패했어요. README의 Supabase 설정을 다시 확인해주세요.', 'error');
   }
 }
 
@@ -942,9 +776,7 @@ previewButton.addEventListener('click', handlePreview);
 saveParsedPlaceButton.addEventListener('click', handleSave);
 exportJsonButton.addEventListener('click', handleExportJson);
 importJsonButton.addEventListener('click', handleImportJson);
-sendMagicLinkButton.addEventListener('click', handleSendMagicLink);
 syncNowButton.addEventListener('click', handleSyncNow);
-signOutButton.addEventListener('click', handleSignOut);
 categoryFilter.addEventListener('change', renderPlaces);
 
 init();

@@ -22,13 +22,14 @@ test('normalizePlaceTimestamps backfills createdAt and updatedAt for legacy reco
   assert.equal(normalized.updatedAt, normalized.createdAt);
 });
 
-test('buildSupabaseRows maps saved places into user-scoped upsert rows', () => {
-  const rows = buildSupabaseRows('user-123', [
+test('buildSupabaseRows maps saved places into shared upsert rows', () => {
+  const rows = buildSupabaseRows([
     {
       id: 'place-1',
       name: 'JJ Sarawak Noodle',
       lat: 1.3381,
       lng: 103.7192,
+      reason: '면이 맛있어서 다시 가고 싶음',
       createdAt: 1700000000000,
       updatedAt: 1700000005000,
     },
@@ -36,7 +37,6 @@ test('buildSupabaseRows maps saved places into user-scoped upsert rows', () => {
 
   assert.deepEqual(rows, [
     {
-      user_id: 'user-123',
       id: 'place-1',
       created_at: 1700000000000,
       updated_at: 1700000005000,
@@ -45,6 +45,7 @@ test('buildSupabaseRows maps saved places into user-scoped upsert rows', () => {
         name: 'JJ Sarawak Noodle',
         lat: 1.3381,
         lng: 103.7192,
+        reason: '면이 맛있어서 다시 가고 싶음',
         createdAt: 1700000000000,
         updatedAt: 1700000005000,
       },
@@ -58,13 +59,13 @@ test('hydratePlacesFromRows restores payloads sorted by newest update first', ()
       id: 'older-1',
       created_at: 1700000000000,
       updated_at: 1700000001000,
-      payload: { id: 'older-1', name: 'Older', lat: 1.3, lng: 103.8 },
+      payload: { id: 'older-1', name: 'Older', lat: 1.3, lng: 103.8, reason: 'older reason' },
     },
     {
       id: 'newer-1',
       created_at: 1700000000000,
       updated_at: 1700000009000,
-      payload: { id: 'newer-1', name: 'Newer', lat: 1.31, lng: 103.81 },
+      payload: { id: 'newer-1', name: 'Newer', lat: 1.31, lng: 103.81, reason: 'newer reason' },
     },
   ]);
 
@@ -74,6 +75,7 @@ test('hydratePlacesFromRows restores payloads sorted by newest update first', ()
       name: 'Newer',
       lat: 1.31,
       lng: 103.81,
+      reason: 'newer reason',
       createdAt: 1700000000000,
       updatedAt: 1700000009000,
     },
@@ -82,6 +84,7 @@ test('hydratePlacesFromRows restores payloads sorted by newest update first', ()
       name: 'Older',
       lat: 1.3,
       lng: 103.8,
+      reason: 'older reason',
       createdAt: 1700000000000,
       updatedAt: 1700000001000,
     },
@@ -96,6 +99,7 @@ test('mergePlacesByUpdatedAt keeps the freshest record per id and retains unique
         name: 'Local Draft',
         lat: 1.3,
         lng: 103.8,
+        reason: 'local',
         createdAt: 1700000000000,
         updatedAt: 1700000001000,
       },
@@ -104,6 +108,7 @@ test('mergePlacesByUpdatedAt keeps the freshest record per id and retains unique
         name: 'Local Only',
         lat: 1.31,
         lng: 103.81,
+        reason: 'local only',
         createdAt: 1700000000000,
         updatedAt: 1700000002000,
       },
@@ -114,6 +119,7 @@ test('mergePlacesByUpdatedAt keeps the freshest record per id and retains unique
         name: 'Remote Fresh',
         lat: 1.32,
         lng: 103.82,
+        reason: 'remote fresh',
         createdAt: 1700000000000,
         updatedAt: 1700000009000,
       },
@@ -122,6 +128,7 @@ test('mergePlacesByUpdatedAt keeps the freshest record per id and retains unique
         name: 'Remote Only',
         lat: 1.33,
         lng: 103.83,
+        reason: 'remote only',
         createdAt: 1700000000000,
         updatedAt: 1700000003000,
       },
@@ -134,6 +141,7 @@ test('mergePlacesByUpdatedAt keeps the freshest record per id and retains unique
       name: 'Remote Fresh',
       lat: 1.32,
       lng: 103.82,
+      reason: 'remote fresh',
       createdAt: 1700000000000,
       updatedAt: 1700000009000,
     },
@@ -142,6 +150,7 @@ test('mergePlacesByUpdatedAt keeps the freshest record per id and retains unique
       name: 'Remote Only',
       lat: 1.33,
       lng: 103.83,
+      reason: 'remote only',
       createdAt: 1700000000000,
       updatedAt: 1700000003000,
     },
@@ -150,6 +159,7 @@ test('mergePlacesByUpdatedAt keeps the freshest record per id and retains unique
       name: 'Local Only',
       lat: 1.31,
       lng: 103.81,
+      reason: 'local only',
       createdAt: 1700000000000,
       updatedAt: 1700000002000,
     },

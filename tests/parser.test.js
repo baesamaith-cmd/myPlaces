@@ -23,20 +23,16 @@ test('normalizeOcrText removes OCR question-mark noise from mixed text', () => {
   assert.equal(normalized, 'JJ Sarawak Noodle\n3 Yung Sheng Rd Singapore 618499');
 });
 
-test('parseRestaurantFields extracts structured restaurant fields from screenshot text', () => {
+test('parseRestaurantFields extracts simplified restaurant fields from screenshot text', () => {
   const parsed = parseRestaurantFields(sampleText);
 
   assert.equal(parsed.name, 'JJ Sarawak Noodle');
   assert.equal(parsed.address, '3 Yung Sheng Rd, 03-127, Singapore 618499');
-  assert.equal(parsed.hours, '7AM - 7.30PM');
-  assert.equal(parsed.nearestLandmark, 'Lakeside MRT Station');
-  assert.equal(parsed.distanceNote, '1.6km');
-  assert.equal(parsed.description, "Jurong's best authentic Sarawak Mee");
-  assert.equal(parsed.priceNote, '$4.50');
-  assert.equal(parsed.area, 'Jurong');
+  assert.match(parsed.reason, /Jurong's best authentic Sarawak Mee/);
+  assert.match(parsed.reason, /\$4.50/);
 });
 
-test('buildPlaceRecord creates a map-ready place object with sensible defaults', () => {
+test('buildPlaceRecord creates a map-ready place object with simplified fields', () => {
   const before = Date.now();
   const record = buildPlaceRecord({
     ...parseRestaurantFields(sampleText),
@@ -47,8 +43,7 @@ test('buildPlaceRecord creates a map-ready place object with sensible defaults',
   const after = Date.now();
 
   assert.equal(record.name, 'JJ Sarawak Noodle');
-  assert.equal(record.category, '면요리');
-  assert.equal(record.area, 'Jurong');
+  assert.equal(record.reason.includes('Sarawak Mee'), true);
   assert.equal(record.sourceType, 'image');
   assert.equal(record.lat, 1.3381);
   assert.equal(record.lng, 103.7192);
@@ -62,6 +57,7 @@ test('buildPlaceRecord preserves existing sync metadata for saved-place edits', 
   const record = buildPlaceRecord({
     id: 'saved-place-1',
     name: 'Edited Place',
+    reason: '좋아서 다시 저장',
     lat: 1.3,
     lng: 103.8,
     createdAt: 1700000000000,

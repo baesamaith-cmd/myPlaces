@@ -56,7 +56,7 @@ function extractLandmark(lines) {
 }
 
 function extractDescription(lines) {
-  const line = lines.find((value) => /best|authentic|famous|must-try|추천|맛집/i.test(value));
+  const line = lines.find((value) => /best|authentic|famous|must-try|추천|맛집|signature|special|why/i.test(value));
   if (!line) return '';
   return line.replace(/\s+at\s+\$\d+(?:\.\d{1,2})?/i, '').trim();
 }
@@ -69,7 +69,7 @@ function extractName(lines, address, hours, landmarkLine) {
     if (/Singapore/i.test(line) && line.split(' ').length <= 3) return false;
     if (/\$\d/.test(line)) return false;
     if (/Nearby\b/i.test(line)) return false;
-    return /[A-Za-z]{2,}/.test(line) && line.length <= 40;
+    return /[A-Za-z가-힣]{2,}/.test(line) && line.length <= 50;
   });
 
   return candidates.length ? candidates[candidates.length - 1] : '';
@@ -84,12 +84,16 @@ function inferArea(text) {
   return 'Singapore';
 }
 
-function inferCategory(parsed) {
-  const text = `${parsed.name} ${parsed.description} ${parsed.dish}`.toLowerCase();
-  if (/mee|noodle|noodles|ramen|면/.test(text)) return '면요리';
-  if (/bakery|coffee|cafe|카페/.test(text)) return '카페';
-  if (/hawker|food centre|호커/.test(text)) return '호커센터';
-  return '맛집';
+function inferReason(parsed) {
+  const fragments = [parsed.description, parsed.dish, parsed.priceNote, parsed.nearestLandmark]
+    .map((value) => String(value || '').trim())
+    .filter(Boolean);
+
+  if (!fragments.length) {
+    return '다시 가보고 싶은 맛집';
+  }
+
+  return fragments.join(' · ');
 }
 
 function slugify(value) {
@@ -112,7 +116,7 @@ export function parseRestaurantFields(rawText = '') {
   const name = extractName(lines, address, hours, landmarkLine);
   const dishMatch = sourceText.match(/Sarawak Mee|Chicken Rice|Laksa|Bak Kut Teh|Nasi Lemak/i);
 
-  return {
+  const parsed = {
     name,
     address,
     hours,
@@ -124,6 +128,13 @@ export function parseRestaurantFields(rawText = '') {
     area: inferArea(sourceText),
     sourceText,
   };
+
+  return {
+    name: parsed.name,
+    address: parsed.address,
+    reason: inferReason(parsed),
+    sourceText: parsed.sourceText,
+  };
 }
 
 export function buildPlaceRecord(parsed) {
@@ -134,18 +145,12 @@ export function buildPlaceRecord(parsed) {
   return {
     id: parsed.id || `${slugify(parsed.name || 'place')}-${timestamp}`,
     name: parsed.name || '이름 미확인 장소',
-    category: parsed.category || inferCategory(parsed),
-    area: parsed.area || 'Singapore',
+    address: parsed.address || '',
+    reason: parsed.reason || '다시 가보고 싶은 맛집',
     lat: Number(parsed.lat),
     lng: Number(parsed.lng),
-    description: parsed.description || parsed.dish || 'OCR에서 추출한 장소',
-    address: parsed.address || '',
-    hours: parsed.hours || '',
     sourceType: parsed.sourceType || 'image',
     sourceText: parsed.sourceText || '',
-    nearestLandmark: parsed.nearestLandmark || '',
-    distanceNote: parsed.distanceNote || '',
-    priceNote: parsed.priceNote || '',
     geocodeSource: parsed.geocodeSource || '',
     createdAt,
     updatedAt,

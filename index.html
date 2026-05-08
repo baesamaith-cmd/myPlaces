@@ -87,36 +87,12 @@
                 placeholder="예: 3 Yung Sheng Rd, 03-127, Singapore 618499"
               />
             </label>
-            <label>
-              영업시간
-              <input id="parsedHours" type="text" placeholder="예: 7AM - 7.30PM" />
-            </label>
-            <label>
-              카테고리
-              <input id="parsedCategory" type="text" placeholder="예: 면요리" />
-            </label>
-            <label>
-              가까운 랜드마크
-              <input id="parsedLandmark" type="text" placeholder="예: Lakeside MRT Station" />
-            </label>
-            <label>
-              거리 메모
-              <input id="parsedDistanceNote" type="text" placeholder="예: 1.6km" />
-            </label>
-            <label>
-              가격 메모
-              <input id="parsedPriceNote" type="text" placeholder="예: $4.50" />
-            </label>
-            <label>
-              지역
-              <input id="parsedArea" type="text" placeholder="예: Jurong" />
-            </label>
             <label class="full-width">
-              설명
+              저장하는 이유
               <textarea
-                id="parsedDescription"
+                id="parsedReason"
                 rows="3"
-                placeholder="예: Jurong's best authentic Sarawak Mee"
+                placeholder="예: 면이 쫄깃하고 가격이 좋아서 다시 가고 싶음"
               ></textarea>
             </label>
           </div>
@@ -185,32 +161,15 @@
           <div class="sync-tools">
             <div class="section-title-row compact-row storage-row">
               <div>
-                <p class="section-kicker">Cloud sync</p>
-                <h3 class="mini-title">Supabase로 기기 간 동기화</h3>
+                <p class="section-kicker">Shared cloud</p>
+                <h3 class="mini-title">무료 Supabase 공용 저장소</h3>
               </div>
             </div>
-            <label for="syncEmailInput">로그인 이메일</label>
-            <input
-              id="syncEmailInput"
-              class="sync-email-input"
-              type="email"
-              inputmode="email"
-              autocomplete="email"
-              placeholder="name@example.com"
-            />
-            <div class="button-row sync-actions-row">
-              <button id="sendMagicLinkButton" type="button" class="secondary-button">
-                매직링크 보내기
-              </button>
-              <button id="syncNowButton" type="button" class="primary-button">
-                지금 동기화
-              </button>
-            </div>
-            <button id="signOutButton" type="button" class="secondary-button full-width-button">
-              로그아웃
+            <button id="syncNowButton" type="button" class="primary-button full-width-button">
+              공용 저장소 새로고침
             </button>
             <p id="syncStatus" class="status-message" aria-live="polite">
-              config.js에 Supabase 정보를 넣으면 기기 간 동기화를 켤 수 있어요.
+              config.js에 Supabase 정보를 넣으면 여러 사람이 같은 맛집 목록을 함께 볼 수 있어요.
             </p>
           </div>
         </section>
