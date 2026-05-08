@@ -19,6 +19,9 @@ test('index exposes simplified shared Supabase controls', () => {
   assert.match(html, /Shared cloud/, 'shared cloud title should exist');
   assert.match(html, /무료 Supabase 공용 저장소/, 'shared cloud section should describe the free shared store');
   assert.match(html, /id="syncNowButton"/, 'manual shared sync button should exist');
+  assert.doesNotMatch(html, /exportJsonButton/, 'JSON export button should be removed');
+  assert.doesNotMatch(html, /importJsonButton/, 'JSON import button should be removed');
+  assert.doesNotMatch(html, /importJsonInput/, 'JSON import input should be removed');
   assert.doesNotMatch(html, /id="syncEmailInput"/, 'email auth input should be removed');
   assert.doesNotMatch(html, /id="sendMagicLinkButton"/, 'magic link button should be removed');
   assert.doesNotMatch(html, /id="signOutButton"/, 'sign out button should be removed');

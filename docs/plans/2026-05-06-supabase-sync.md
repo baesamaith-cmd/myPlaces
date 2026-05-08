@@ -22,7 +22,6 @@
 
 ### Task 3: 앱 저장 레코드에 수정 시각 메타데이터 부여
 - `parser.js`
-- `storage-transfer.js`
 - `app.js`
 - 저장/불러오기 시 `createdAt`, `updatedAt` 보존 및 마이그레이션
 
@@ -43,5 +42,5 @@
 
 ### Task 7: 전체 검증
 - `npm test`
-- `node --check app.js parser.js storage-transfer.js cloud-sync.js config.js config.example.js`
+- `node --check app.js parser.js cloud-sync.js config.js config.example.js`
 - `git diff`, `git status`

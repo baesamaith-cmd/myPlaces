@@ -3,23 +3,21 @@
 GitHub Pages에서 바로 배포할 수 있는 정적 지도 MVP입니다.
 
 ## 구성
-- `index.html`: 메인 페이지, OCR 업로드 UI, JSON 백업, Supabase 공용 저장 UI
+- `index.html`: 메인 페이지, OCR 업로드 UI, Supabase 공용 저장 UI
 - `style.css`: 지도/리스트/업로드 폼 스타일
 - `app.js`: 지도 렌더링, OCR 흐름, geocoding, localStorage 저장, Supabase 공용 sync
 - `parser.js`: OCR 텍스트에서 **가게명 / 주소 / 저장 이유**만 추리는 파싱 유틸
 - `cloud-sync.js`: Supabase row 변환, 최신 수정본 병합, timestamp 정규화
-- `storage-transfer.js`: JSON export/import 유틸
 - `config.js`: 브라우저에서 읽는 Supabase 공개 설정 파일
 - `config.example.js`: Supabase 설정 예시
 - `supabase/schema.sql`: `shared_places` 테이블 및 공용 RLS 정책
-- `tests/*.test.js`: 파서/레이아웃/백업/맵링크/수정/클라우드 동기화 테스트
+- `tests/*.test.js`: 파서/레이아웃/맵링크/수정/클라우드 동기화 테스트
 
 ## 기능
 - 이미지 업로드 후 **Tesseract.js OCR** 실행
 - OCR 텍스트에서 **가게명 / 주소 / 저장 이유** 추출
 - geocoding 결과 후보를 지도에 미리보기
 - 확인 후 브라우저 `localStorage`에 저장
-- JSON export/import로 백업 및 복원
 - **Supabase 무료 플랜** 기반 공용 저장소
   - 여러 사람이 같은 목록을 함께 사용 가능
   - 로그인 없이 `shared_places` 테이블로 병합/업서트
@@ -70,7 +68,7 @@ GitHub 저장소 **Settings → Secrets and variables → Actions → Variables*
 ### 5) 동작 방식
 - 기본: localStorage 저장 사용
 - 공용 저장소 설정 후: 로컬 데이터와 Supabase `shared_places` 테이블을 병합
-- 저장/수정/JSON import 후: 공용 저장소에 다시 업서트
+- 저장/수정 후: 공용 저장소에 다시 업서트
 
 ## 테스트
 ```bash
@@ -81,7 +79,6 @@ npm test
 ```bash
 node --check app.js
 node --check parser.js
-node --check storage-transfer.js
 node --check cloud-sync.js
 node --check config.js
 node --check config.example.js
