@@ -6,7 +6,7 @@ import {
   normalizePlaceTimestamps,
 } from './cloud-sync.js';
 import { buildPlaceActionLinks } from './map-links.js';
-import { buildCandidateFromPlace, findDuplicatePlace, removeUserPlace, upsertUserPlace } from './user-place-utils.js';
+import { buildCandidateFromPlace, findDuplicatePlace, upsertUserPlace } from './user-place-utils.js';
 
 const STORAGE_KEY = 'myPlaces.userPlaces.v1';
 const DEFAULT_CENTER = [1.3521, 103.8198];
@@ -123,8 +123,8 @@ function updateFormMode() {
   saveParsedPlaceButton.textContent = isEditing ? '수정 저장' : '저장하기';
   cancelEditButton.hidden = !isEditing;
   editModeHint.textContent = isEditing
-    ? '저장된 장소를 수정 중입니다. 필요하면 제목/주소를 바꾸고 다시 저장하세요.'
-    : '새 장소 저장 모드입니다.';
+    ? '저장된 장소를 수정 중입니다. 필요하면 제목/주소를 바꾸고 다시 저장하세요. | Editing a saved place. Update the name or address, then save again.'
+    : '새 장소 저장 모드입니다. | New place save mode.';
 }
 
 function startEditingPlace(place) {
@@ -143,7 +143,7 @@ function stopEditingPlace() {
   selectedGeocodeCandidate = null;
   clearPreviewMarker();
   geocodeCandidates.className = 'candidate-list empty-state';
-  geocodeCandidates.textContent = '아직 위치 후보가 없습니다.';
+  geocodeCandidates.textContent = '아직 위치 후보가 없습니다. | No address candidates yet.';
   updateFormMode();
 }
 
@@ -171,7 +171,7 @@ function clearPreviewMarker() {
 }
 
 function isPlaceCardActionTarget(target) {
-  return Boolean(target?.closest('.place-edit-button, .place-delete-button, .place-action-link'));
+  return Boolean(target?.closest('.place-edit-button, .place-action-link'));
 }
 
 function renderPlaces() {
@@ -207,7 +207,6 @@ function renderPlaces() {
         </div>
         <div class="place-card-head-actions">
           <button type="button" class="place-edit-button">수정하기</button>
-          <button type="button" class="place-delete-button">삭제하기</button>
         </div>
       </div>
       <p>${escapeHtml(place.reason || '저장 이유 없음')}</p>
@@ -243,12 +242,6 @@ function renderPlaces() {
     editButton?.addEventListener('click', (event) => {
       event.stopPropagation();
       startEditingPlace(place);
-    });
-
-    const deleteButton = item.querySelector('.place-delete-button');
-    deleteButton?.addEventListener('click', async (event) => {
-      event.stopPropagation();
-      await handleDeletePlace(place);
     });
 
     item.querySelectorAll('a').forEach((link) => {
@@ -337,17 +330,6 @@ async function pushPlacesToCloud(places) {
   }
 }
 
-async function deletePlaceFromCloud(placeId) {
-  const client = ensureSupabaseClient();
-  if (!client) return;
-
-  const { error } = await client.from('shared_places').delete().eq('id', placeId);
-
-  if (error) {
-    throw new Error(`공용 저장소 삭제에 실패했습니다: ${error.message}`);
-  }
-}
-
 async function syncPlacesWithCloud(options = {}) {
   const { announce = true } = options;
   const client = ensureSupabaseClient();
@@ -426,7 +408,7 @@ function renderCandidateList(candidates) {
 
   if (!candidates.length) {
     geocodeCandidates.className = 'candidate-list empty-state';
-    geocodeCandidates.textContent = '위치 후보를 찾지 못했습니다. 주소를 수정한 뒤 다시 시도해보세요.';
+    geocodeCandidates.textContent = '위치 후보를 찾지 못했습니다. 주소를 수정한 뒤 다시 시도해보세요. | No address candidates found. Update the address and try again.';
     selectedGeocodeCandidate = null;
     clearPreviewMarker();
     return;
@@ -632,7 +614,7 @@ async function handleRunOcr() {
     populateForm(parsed);
     sourceTextPreview.textContent = parsed.sourceText || '텍스트를 추출하지 못했습니다.';
     renderCandidateList([]);
-    setStatus('OCR 완료. 추출된 필드를 확인하고 지도 미리보기를 눌러주세요.', 'success');
+    setStatus('OCR 완료. 추출된 필드를 확인한 뒤 3단계 주소 확인을 눌러주세요. | OCR complete. Review the fields, then run step 3 to confirm the address.', 'success');
   } catch (error) {
     console.error(error);
     setStatus(`OCR 실패: ${error.message}`, 'error');
@@ -640,27 +622,27 @@ async function handleRunOcr() {
     runOcrButton.disabled = false;
   }
 }
-
 async function handlePreview() {
   const draft = readFormDraft();
-  if (!draft.name) {
-    setStatus('가게 이름이 비어 있습니다. OCR 결과를 확인하거나 직접 입력해주세요.', 'error');
+
+  if (!draft.address && !draft.name) {
+    setStatus('먼저 OCR을 실행하거나 이름/주소를 입력해주세요. | Run OCR first, or enter a name and address.', 'error');
     return;
   }
 
   try {
     previewButton.disabled = true;
-    setStatus('위치 후보를 찾는 중…');
+    setStatus('주소 후보를 확인하는 중… | Checking address candidates…');
     const candidates = await geocodeDraft(draft);
     renderCandidateList(candidates);
     if (candidates.length) {
-      setStatus('위치 후보를 찾았습니다. 후보를 확인한 뒤 저장할 수 있어요.', 'success');
+      setStatus('주소 후보를 찾았습니다. 위치를 확인한 뒤 4단계 저장을 누르세요. | Address candidates found. Confirm the location, then use step 4 to save.', 'success');
     } else {
       setStatus('후보를 찾지 못했습니다. 주소나 이름을 조금 더 구체적으로 수정해보세요.', 'error');
     }
   } catch (error) {
     console.error(error);
-    setStatus(`미리보기 실패: ${error.message}`, 'error');
+    setStatus(`주소 확인 실패 | Address confirmation failed: ${error.message}`, 'error');
   } finally {
     previewButton.disabled = false;
   }
@@ -708,33 +690,6 @@ function handleSave() {
   }
 }
 
-async function handleDeletePlace(place) {
-  const confirmed = window.confirm(`'${place.name}'을(를) 삭제할까요?`);
-  if (!confirmed) {
-    return;
-  }
-
-  try {
-    if (editingPlaceId === place.id) {
-      stopEditingPlace();
-    }
-
-    userPlaces = removeUserPlace(userPlaces, place.id).map((item) => normalizePlaceTimestamps(item));
-    persistSavedPlaces();
-    updateAllPlaces();
-
-    if (isSupabaseConfigured()) {
-      await deletePlaceFromCloud(place.id);
-    }
-
-    setStatus(`'${place.name}' 삭제 완료.`, 'success');
-  } catch (error) {
-    console.error(error);
-    setStatus(`삭제 실패: ${error.message}`, 'error');
-    await syncPlacesWithCloud({ announce: false });
-  }
-}
-
 async function handleSyncNow() {
   await syncPlacesWithCloud({ announce: true });
 }
@@ -763,12 +718,12 @@ async function init() {
 
 imageUpload.addEventListener('change', () => {
   const [file] = imageUpload.files;
-  selectedFileName.textContent = file ? `선택된 파일: ${file.name}` : '선택된 파일이 없습니다.';
+  selectedFileName.textContent = file ? `선택된 파일 | Selected file: ${file.name}` : '선택된 파일이 없습니다. | No file selected yet.';
 });
 
 cancelEditButton.addEventListener('click', () => {
   stopEditingPlace();
-  setStatus('수정 모드를 종료했어요. 새 장소를 저장하거나 다른 장소를 다시 선택할 수 있어요.');
+  setStatus('수정 모드를 종료했어요. 새 장소를 저장하거나 다른 장소를 다시 선택할 수 있어요. | Edit mode closed. Save a new place or choose another saved place again.');
 });
 
 runOcrButton.addEventListener('click', handleRunOcr);

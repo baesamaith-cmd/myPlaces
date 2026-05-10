@@ -34,53 +34,68 @@
             <span class="hero-chip">Singapore Food Map</span>
           </div>
 
-          <h1>맛집 캡처를 바로 지도에 올리기</h1>
-          <p class="subtitle">선택 → OCR → 미리보기.</p>
+          <h1>맛집 캡처를 바로 지도에 올리기 | Save food finds from screenshots</h1>
+          <p class="subtitle">이미지 업로드 → OCR → 주소 확인 → 저장의 4단계로 끝내는 맛집 저장 흐름 | A simple 4-step flow: upload image → OCR → confirm address → save.</p>
 
-          <div class="quick-actions" aria-label="빠른 실행">
-            <label for="imageUpload" class="secondary-button action-button">
-              캡처 이미지 선택
-            </label>
-            <button id="runOcrButton" type="button" class="primary-button">
-              OCR 실행
-            </button>
-            <button id="previewButton" type="button" class="secondary-button">
-              지도에 미리보기
-            </button>
-          </div>
+          <ol class="step-flow" aria-label="맛집 저장 4단계 | 4-step save flow">
+            <li class="step-card">
+              <p class="step-title">1. 이미지 업로드 | Image Upload</p>
+              <label for="imageUpload" class="secondary-button action-button">
+                이미지 업로드 | Image Upload
+              </label>
+            </li>
+            <li class="step-card">
+              <p class="step-title">2. OCR | OCR</p>
+              <button id="runOcrButton" type="button" class="primary-button">
+                OCR 실행 | Run OCR
+              </button>
+            </li>
+            <li class="step-card">
+              <p class="step-title">3. 주소 확인 | Confirm Address</p>
+              <button id="previewButton" type="button" class="secondary-button">
+                주소 확인 | Confirm Address
+              </button>
+            </li>
+            <li class="step-card">
+              <p class="step-title">4. 저장 | Save</p>
+              <button id="saveParsedPlace" type="button" class="primary-button">
+                저장하기 | Save Place
+              </button>
+            </li>
+          </ol>
 
-          <p id="selectedFileName" class="hero-helper-text">선택된 파일이 없습니다.</p>
+          <p id="selectedFileName" class="hero-helper-text">선택된 파일이 없습니다. | No file selected yet.</p>
         </section>
 
         <section class="panel upload-panel">
           <div class="section-title-row">
             <div>
               <p class="section-kicker">Capture ingestion</p>
-              <h2>OCR 결과 확인</h2>
+              <h2>OCR와 주소를 확인한 뒤 저장하세요 | Review OCR and address before saving</h2>
             </div>
             <span class="helper badge-soft">MVP</span>
           </div>
 
-          <label class="upload-label" for="imageUpload">이미지 바꾸기</label>
+          <label class="upload-label" for="imageUpload">이미지 바꾸기 | Change image</label>
           <div class="upload-dropzone">
             <input id="imageUpload" type="file" accept="image/*" />
             <div class="dropzone-copy">
-              <strong>다른 캡처로 다시 선택</strong>
-              <p>파일을 바꾸면 OCR과 지도 미리보기를 다시 실행할 수 있어요.</p>
+              <strong>다른 캡처로 다시 선택 | Pick another screenshot</strong>
+              <p>파일을 바꾸면 OCR과 주소 확인을 다시 실행할 수 있어요. | Change the file to rerun OCR and address confirmation.</p>
             </div>
           </div>
 
           <p id="ocrStatus" class="status-message" aria-live="polite">
-            이미지를 선택하고 OCR 실행을 눌러주세요.
+            이미지를 선택하고 OCR 실행을 눌러주세요. | Choose an image and run OCR.
           </p>
 
           <div class="form-grid">
             <label>
-              가게 이름
+              가게 이름 | Place name
               <input id="parsedName" type="text" placeholder="예: JJ Sarawak Noodle" />
             </label>
             <label>
-              주소
+              주소 | Address
               <input
                 id="parsedAddress"
                 type="text"
@@ -88,7 +103,7 @@
               />
             </label>
             <label class="full-width">
-              저장하는 이유
+              저장하는 이유 | Why save it
               <textarea
                 id="parsedReason"
                 rows="3"
@@ -98,27 +113,24 @@
           </div>
 
           <details class="source-details">
-            <summary>OCR 원문 보기</summary>
-            <pre id="sourceTextPreview" class="source-preview">아직 OCR 결과가 없습니다.</pre>
+            <summary>OCR 원문 보기 | View OCR text</summary>
+            <pre id="sourceTextPreview" class="source-preview">아직 OCR 결과가 없습니다. | No OCR result yet.</pre>
           </details>
 
           <div class="candidate-section">
             <div class="section-title-row compact-row">
-              <h3 class="mini-title">위치 후보</h3>
+              <h3 class="mini-title">위치 후보 | Address candidates</h3>
               <span class="helper">Geocoding result</span>
             </div>
             <div id="geocodeCandidates" class="candidate-list empty-state">
-              아직 위치 후보가 없습니다.
+              아직 위치 후보가 없습니다. | No address candidates yet.
             </div>
           </div>
 
-          <p id="editModeHint" class="helper-text form-mode-hint">새 장소 저장 모드입니다.</p>
+          <p id="editModeHint" class="helper-text form-mode-hint">새 장소 저장 모드입니다. | New place save mode.</p>
           <div class="button-row save-actions-row">
-            <button id="saveParsedPlace" type="button" class="primary-button">
-              저장하기
-            </button>
             <button id="cancelEditButton" type="button" class="secondary-button" hidden>
-              수정 취소
+              수정 취소 | Cancel Edit
             </button>
           </div>
         </section>
@@ -127,10 +139,10 @@
           <div class="section-title-row compact-row">
             <div>
               <p class="section-kicker">Browse</p>
-              <h2>저장된 장소 필터</h2>
+              <h2>저장된 장소 필터 | Filter saved places</h2>
             </div>
           </div>
-          <label for="categoryFilter">카테고리</label>
+          <label for="categoryFilter">카테고리 | Category</label>
           <select id="categoryFilter">
             <option value="all">전체</option>
           </select>
@@ -139,14 +151,14 @@
             <div class="section-title-row compact-row storage-row">
               <div>
                 <p class="section-kicker">Shared cloud</p>
-                <h3 class="mini-title">무료 Supabase 공용 저장소</h3>
+                <h3 class="mini-title">무료 Supabase 공용 저장소 | Free shared Supabase storage</h3>
               </div>
             </div>
             <button id="syncNowButton" type="button" class="primary-button full-width-button">
-              공용 저장소 새로고침
+              공용 저장소 새로고침 | Refresh shared storage
             </button>
             <p id="syncStatus" class="status-message" aria-live="polite">
-              config.js에 Supabase 정보를 넣으면 여러 사람이 같은 맛집 목록을 함께 볼 수 있어요.
+              config.js에 Supabase 정보를 넣으면 여러 사람이 같은 맛집 목록을 함께 볼 수 있어요. | Add Supabase config to share one list with everyone.
             </p>
           </div>
         </section>
@@ -155,7 +167,7 @@
           <div class="list-header">
             <div>
               <p class="section-kicker">Collection</p>
-              <h2>저장된 장소</h2>
+              <h2>저장된 장소 | Saved places</h2>
             </div>
             <span id="placeCount">0개</span>
           </div>
@@ -172,7 +184,7 @@
             </div>
             <div class="map-badges">
               <span class="badge">OCR import</span>
-              <span class="badge">Map preview</span>
+              <span class="badge">Address confirm</span>
             </div>
           </div>
           <div id="map" aria-label="맛집 지도"></div>
