@@ -5,22 +5,23 @@ import { readFileSync } from 'node:fs';
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const appJs = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
 
-test('index exposes a single-language four-step ingestion flow that JS can localize by browser language', () => {
+test('index starts with upload-first mobile flow and reveals later steps progressively', () => {
   const heroSection = html.match(/<section class="hero-card panel">([\s\S]*?)<\/section>/);
 
   assert.ok(heroSection, 'hero section should exist');
-  assert.match(heroSection[1], /1\. 이미지 업로드/, 'step 1 should default to Korean in the HTML');
-  assert.match(heroSection[1], /2\. OCR/, 'step 2 should default to Korean in the HTML');
-  assert.match(heroSection[1], /3\. 주소 확인/, 'step 3 should default to Korean in the HTML');
-  assert.match(heroSection[1], /4\. 저장/, 'step 4 should default to Korean in the HTML');
-  assert.doesNotMatch(heroSection[1], /\|/, 'hero flow should not render bilingual copy side by side');
   assert.match(heroSection[1], /data-i18n-key="heroTitle"/, 'hero title should be localizable');
-  assert.match(heroSection[1], /data-i18n-key="heroSubtitle"/, 'hero subtitle should be localizable');
-  assert.match(heroSection[1], /data-i18n-key="step1Title"/, 'step 1 title should be localizable');
-  assert.match(heroSection[1], /for="imageUpload"[^>]*data-i18n-key="step1Action"/, 'image upload action should be localizable');
-  assert.match(heroSection[1], /id="runOcrButton"[^>]*data-i18n-key="step2Action"/, 'OCR action should be localizable');
-  assert.match(heroSection[1], /id="previewButton"[^>]*data-i18n-key="step3Action"/, 'address confirmation action should be localizable');
-  assert.match(heroSection[1], /id="saveParsedPlace"[^>]*data-i18n-key="step4Action"/, 'save action should be localizable');
+  assert.match(heroSection[1], /for="imageUpload"[^>]*data-i18n-key="step1Action"/, 'image upload action should stay visible at the top');
+  assert.doesNotMatch(heroSection[1], /id="runOcrButton"/, 'OCR button should not stay crowded in the top hero section');
+  assert.doesNotMatch(heroSection[1], /id="previewButton"/, 'preview button should not stay crowded in the top hero section');
+  assert.doesNotMatch(heroSection[1], /id="saveParsedPlace"/, 'save button should not stay crowded in the top hero section');
+  assert.doesNotMatch(heroSection[1], /\|/, 'hero flow should not render bilingual copy side by side');
+
+  assert.match(html, /id="ocrStepSection"[^>]*hidden/, 'OCR step should be hidden initially');
+  assert.match(html, /id="reviewStepSection"[^>]*hidden/, 'review step should be hidden initially');
+  assert.match(html, /id="saveStepSection"[^>]*hidden/, 'save step should be hidden initially');
+  assert.match(html, /id="runOcrButton"[^>]*data-i18n-key="step2Action"/, 'OCR action should exist in its own stage section');
+  assert.match(html, /id="previewButton"[^>]*data-i18n-key="step3Action"/, 'address confirmation action should exist in its own stage section');
+  assert.match(html, /id="saveParsedPlace"[^>]*data-i18n-key="step4Action"/, 'save action should exist in its own stage section');
 });
 
 test('index exposes simplified shared Supabase controls', () => {
@@ -55,6 +56,15 @@ test('app localizes UI from browser language instead of rendering both languages
   assert.match(appJs, /function applyTranslations\(/, 'app should apply localized copy to the DOM');
   assert.match(appJs, /data-i18n-key/, 'app should look for localizable text nodes');
   assert.match(appJs, /data-i18n-placeholder/, 'app should localize placeholders too');
+});
+
+test('app progressively reveals later ingestion steps and scrolls them into view on mobile', () => {
+  assert.match(appJs, /const ocrStepSection = document.getElementById\('ocrStepSection'\);/, 'app should reference the OCR step section');
+  assert.match(appJs, /const reviewStepSection = document.getElementById\('reviewStepSection'\);/, 'app should reference the review step section');
+  assert.match(appJs, /const saveStepSection = document.getElementById\('saveStepSection'\);/, 'app should reference the save step section');
+  assert.match(appJs, /function setStepVisibility\(/, 'app should control which step panels are visible');
+  assert.match(appJs, /function revealStep\(/, 'app should reveal a step and bring it into view');
+  assert.match(appJs, /scrollIntoView\(/, 'app should scroll the next step into view when progressing');
 });
 
 test('saved place cards keep edit and map actions but no delete action', () => {

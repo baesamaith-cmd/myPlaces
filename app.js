@@ -16,7 +16,7 @@ const translations = {
   ko: {
     heroChip: '싱가포르 맛집 지도',
     heroTitle: '맛집 캡처를 바로 지도에 올리기',
-    heroSubtitle: '이미지 업로드 → OCR → 주소 확인 → 저장의 4단계로 끝내는 맛집 저장 흐름',
+    heroSubtitle: '이미지 업로드부터 차례대로 진행하는 모바일 친화 흐름',
     captureKicker: '캡처 저장',
     mvpBadge: 'MVP',
     stepFlowAriaLabel: '맛집 저장 4단계',
@@ -31,7 +31,11 @@ const translations = {
     step4ActionEdit: '수정 저장',
     selectedFileNone: '선택된 파일이 없습니다.',
     selectedFileChosen: '선택된 파일: {fileName}',
-    uploadPanelTitle: 'OCR와 주소를 확인한 뒤 저장하세요',
+    uploadPanelTitle: '한 단계씩 아래로 진행하세요',
+    step2Kicker: '2단계',
+    step2Body: '이미지를 고른 뒤 OCR을 실행해서 텍스트를 읽어오세요.',
+    step3Kicker: '3단계',
+    step4Kicker: '4단계',
     uploadLabel: '이미지 바꾸기',
     uploadDropzoneTitle: '다른 캡처로 다시 선택',
     uploadDropzoneBody: '파일을 바꾸면 OCR과 주소 확인을 다시 실행할 수 있어요.',
@@ -112,7 +116,7 @@ const translations = {
   en: {
     heroChip: 'Singapore Food Map',
     heroTitle: 'Save food finds from screenshots',
-    heroSubtitle: 'A simple 4-step flow: upload image → OCR → confirm address → save.',
+    heroSubtitle: 'A mobile-first flow that reveals each step as you go.',
     captureKicker: 'Capture ingestion',
     mvpBadge: 'MVP',
     stepFlowAriaLabel: '4-step place save flow',
@@ -127,7 +131,11 @@ const translations = {
     step4ActionEdit: 'Save Changes',
     selectedFileNone: 'No file selected yet.',
     selectedFileChosen: 'Selected file: {fileName}',
-    uploadPanelTitle: 'Review OCR and address before saving',
+    uploadPanelTitle: 'Move downward one step at a time',
+    step2Kicker: 'Step 2',
+    step2Body: 'After choosing an image, run OCR to read the text.',
+    step3Kicker: 'Step 3',
+    step4Kicker: 'Step 4',
     uploadLabel: 'Change image',
     uploadDropzoneTitle: 'Pick another screenshot',
     uploadDropzoneBody: 'Change the file to rerun OCR and address confirmation.',
@@ -251,6 +259,9 @@ const previewButton = document.getElementById('previewButton');
 const saveParsedPlaceButton = document.getElementById('saveParsedPlace');
 const syncNowButton = document.getElementById('syncNowButton');
 const cancelEditButton = document.getElementById('cancelEditButton');
+const ocrStepSection = document.getElementById('ocrStepSection');
+const reviewStepSection = document.getElementById('reviewStepSection');
+const saveStepSection = document.getElementById('saveStepSection');
 const ocrStatus = document.getElementById('ocrStatus');
 const syncStatus = document.getElementById('syncStatus');
 const selectedFileName = document.getElementById('selectedFileName');
@@ -309,6 +320,22 @@ function setSyncStatus(message, variant = 'default') {
   }
 }
 
+function setStepVisibility({
+  showOcr = false,
+  showReview = false,
+  showSave = false,
+} = {}) {
+  ocrStepSection.hidden = !showOcr;
+  reviewStepSection.hidden = !showReview;
+  saveStepSection.hidden = !showSave;
+}
+
+function revealStep(section) {
+  if (!section) return;
+  section.hidden = false;
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function getSupabaseConfig() {
   return window.MYPLACES_SUPABASE_CONFIG || {};
 }
@@ -354,8 +381,10 @@ function startEditingPlace(place) {
   latestSourceText = place.sourceText || '';
   populateForm(place);
   renderCandidateList([buildCandidateFromPlace(place)]);
+  setStepVisibility({ showOcr: true, showReview: true, showSave: true });
   updateFormMode();
   setStatus(t('editModeStarted', { name: place.name }), 'success');
+  revealStep(reviewStepSection);
 }
 
 function stopEditingPlace() {
@@ -365,6 +394,7 @@ function stopEditingPlace() {
   clearPreviewMarker();
   geocodeCandidates.className = 'candidate-list empty-state';
   geocodeCandidates.textContent = t('candidateListEmpty');
+  setStepVisibility({ showOcr: Boolean(imageUpload.files?.length), showReview: false, showSave: false });
   updateFormMode();
 }
 
@@ -819,12 +849,15 @@ async function runOcr(file) {
 async function handleRunOcr() {
   const [file] = imageUpload.files;
   if (!file) {
+    revealStep(ocrStepSection);
     setStatus(t('ocrMissingFile'), 'error');
     return;
   }
 
   try {
     stopEditingPlace();
+    setStepVisibility({ showOcr: true, showReview: true, showSave: false });
+    revealStep(reviewStepSection);
     setStatus(t('ocrRunning'));
     runOcrButton.disabled = true;
     await new Promise((resolve) => window.requestAnimationFrame(resolve));
@@ -836,6 +869,7 @@ async function handleRunOcr() {
     sourceTextPreview.textContent = parsed.sourceText || t('sourcePreviewUnavailable');
     renderCandidateList([]);
     setStatus(t('ocrSuccess'), 'success');
+    revealStep(reviewStepSection);
   } catch (error) {
     console.error(error);
     setStatus(t('ocrError', { message: error.message }), 'error');
@@ -847,6 +881,7 @@ async function handlePreview() {
   const draft = readFormDraft();
 
   if (!draft.address && !draft.name) {
+    revealStep(reviewStepSection);
     setStatus(t('candidateSearchNeedInput'), 'error');
     return;
   }
@@ -857,7 +892,9 @@ async function handlePreview() {
     const candidates = await geocodeDraft(draft);
     renderCandidateList(candidates);
     if (candidates.length) {
+      setStepVisibility({ showOcr: true, showReview: true, showSave: true });
       setStatus(t('candidateSearchSuccess'), 'success');
+      revealStep(saveStepSection);
     } else {
       setStatus(t('candidateSearchNoResult'), 'error');
     }
@@ -919,6 +956,7 @@ async function init() {
   try {
     seedPlaces = [];
     userPlaces = loadSavedPlaces();
+    setStepVisibility({ showOcr: false, showReview: false, showSave: false });
     updateFormMode();
     updateAllPlaces();
   } catch (error) {
@@ -940,6 +978,14 @@ async function init() {
 imageUpload.addEventListener('change', () => {
   const [file] = imageUpload.files;
   selectedFileName.textContent = file ? t('selectedFileChosen', { fileName: file.name }) : t('selectedFileNone');
+  latestParsedData = null;
+  latestSourceText = '';
+  sourceTextPreview.textContent = t('sourcePreviewEmpty');
+  stopEditingPlace();
+  if (file) {
+    setStepVisibility({ showOcr: true, showReview: false, showSave: false });
+    revealStep(ocrStepSection);
+  }
 });
 
 cancelEditButton.addEventListener('click', () => {

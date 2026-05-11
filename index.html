@@ -35,43 +35,22 @@
           </div>
 
           <h1 data-i18n-key="heroTitle">맛집 캡처를 바로 지도에 올리기</h1>
-          <p class="subtitle" data-i18n-key="heroSubtitle">이미지 업로드 → OCR → 주소 확인 → 저장의 4단계로 끝내는 맛집 저장 흐름</p>
+          <p class="subtitle" data-i18n-key="heroSubtitle">이미지 업로드부터 차례대로 진행하는 모바일 친화 흐름</p>
 
-          <ol class="step-flow" aria-label="맛집 저장 4단계" data-i18n-aria-label="stepFlowAriaLabel">
-            <li class="step-card">
-              <p class="step-title" data-i18n-key="step1Title">1. 이미지 업로드</p>
-              <label for="imageUpload" class="secondary-button action-button" data-i18n-key="step1Action">
-                이미지 업로드
-              </label>
-            </li>
-            <li class="step-card">
-              <p class="step-title" data-i18n-key="step2Title">2. OCR</p>
-              <button id="runOcrButton" type="button" class="primary-button" data-i18n-key="step2Action">
-                OCR 실행
-              </button>
-            </li>
-            <li class="step-card">
-              <p class="step-title" data-i18n-key="step3Title">3. 주소 확인</p>
-              <button id="previewButton" type="button" class="secondary-button" data-i18n-key="step3Action">
-                주소 확인
-              </button>
-            </li>
-            <li class="step-card">
-              <p class="step-title" data-i18n-key="step4Title">4. 저장</p>
-              <button id="saveParsedPlace" type="button" class="primary-button" data-i18n-key="step4Action">
-                저장하기
-              </button>
-            </li>
-          </ol>
+          <div class="hero-upload-action">
+            <label for="imageUpload" class="primary-button action-button" data-i18n-key="step1Action">
+              이미지 업로드
+            </label>
+          </div>
 
           <p id="selectedFileName" class="hero-helper-text" data-i18n-key="selectedFileNone">선택된 파일이 없습니다.</p>
         </section>
 
         <section class="panel upload-panel">
-          <div class="section-title-row">
+          <div class="section-title-row upload-stage-header">
             <div>
               <p class="section-kicker" data-i18n-key="captureKicker">Capture ingestion</p>
-              <h2 data-i18n-key="uploadPanelTitle">OCR와 주소를 확인한 뒤 저장하세요</h2>
+              <h2 data-i18n-key="uploadPanelTitle">한 단계씩 아래로 진행하세요</h2>
             </div>
             <span class="helper badge-soft" data-i18n-key="mvpBadge">MVP</span>
           </div>
@@ -85,56 +64,93 @@
             </div>
           </div>
 
-          <p id="ocrStatus" class="status-message" aria-live="polite">
-            이미지를 선택하고 OCR 실행을 눌러주세요.
-          </p>
-
-          <div class="form-grid">
-            <label>
-              <span data-i18n-key="parsedNameLabel">가게 이름</span>
-              <input id="parsedName" type="text" placeholder="예: JJ Sarawak Noodle" data-i18n-placeholder="parsedNamePlaceholder" />
-            </label>
-            <label>
-              <span data-i18n-key="parsedAddressLabel">주소</span>
-              <input
-                id="parsedAddress"
-                type="text"
-                placeholder="예: 3 Yung Sheng Rd, 03-127, Singapore 618499"
-                data-i18n-placeholder="parsedAddressPlaceholder"
-              />
-            </label>
-            <label class="full-width">
-              <span data-i18n-key="parsedReasonLabel">저장하는 이유</span>
-              <textarea
-                id="parsedReason"
-                rows="3"
-                placeholder="예: 면이 쫄깃하고 가격이 좋아서 다시 가고 싶음"
-                data-i18n-placeholder="parsedReasonPlaceholder"
-              ></textarea>
-            </label>
-          </div>
-
-          <details class="source-details">
-            <summary data-i18n-key="sourceDetailsSummary">OCR 원문 보기</summary>
-            <pre id="sourceTextPreview" class="source-preview" data-i18n-key="sourcePreviewEmpty">아직 OCR 결과가 없습니다.</pre>
-          </details>
-
-          <div class="candidate-section">
+          <section id="ocrStepSection" class="step-panel" hidden>
             <div class="section-title-row compact-row">
-              <h3 class="mini-title" data-i18n-key="candidateSectionTitle">위치 후보</h3>
-              <span class="helper" data-i18n-key="candidateHelper">Geocoding result</span>
+              <div>
+                <p class="section-kicker" data-i18n-key="step2Kicker">Step 2</p>
+                <h3 class="mini-title" data-i18n-key="step2Title">2. OCR</h3>
+              </div>
             </div>
-            <div id="geocodeCandidates" class="candidate-list empty-state" data-i18n-key="candidateListEmpty">
-              아직 위치 후보가 없습니다.
-            </div>
-          </div>
-
-          <p id="editModeHint" class="helper-text form-mode-hint" data-i18n-key="editModeHintNew">새 장소 저장 모드입니다.</p>
-          <div class="button-row save-actions-row">
-            <button id="cancelEditButton" type="button" class="secondary-button" hidden data-i18n-key="cancelEditButton">
-              수정 취소
+            <p class="helper-text" data-i18n-key="step2Body">이미지를 고른 뒤 OCR을 실행해서 텍스트를 읽어오세요.</p>
+            <button id="runOcrButton" type="button" class="primary-button full-width-button" data-i18n-key="step2Action">
+              OCR 실행
             </button>
-          </div>
+          </section>
+
+          <section id="reviewStepSection" class="step-panel" hidden>
+            <div class="section-title-row compact-row">
+              <div>
+                <p class="section-kicker" data-i18n-key="step3Kicker">Step 3</p>
+                <h3 class="mini-title" data-i18n-key="step3Title">3. 주소 확인</h3>
+              </div>
+            </div>
+
+            <p id="ocrStatus" class="status-message" aria-live="polite">
+              이미지를 선택하고 OCR 실행을 눌러주세요.
+            </p>
+
+            <div class="form-grid">
+              <label>
+                <span data-i18n-key="parsedNameLabel">가게 이름</span>
+                <input id="parsedName" type="text" placeholder="예: JJ Sarawak Noodle" data-i18n-placeholder="parsedNamePlaceholder" />
+              </label>
+              <label>
+                <span data-i18n-key="parsedAddressLabel">주소</span>
+                <input
+                  id="parsedAddress"
+                  type="text"
+                  placeholder="예: 3 Yung Sheng Rd, 03-127, Singapore 618499"
+                  data-i18n-placeholder="parsedAddressPlaceholder"
+                />
+              </label>
+              <label class="full-width">
+                <span data-i18n-key="parsedReasonLabel">저장하는 이유</span>
+                <textarea
+                  id="parsedReason"
+                  rows="3"
+                  placeholder="예: 면이 쫄깃하고 가격이 좋아서 다시 가고 싶음"
+                  data-i18n-placeholder="parsedReasonPlaceholder"
+                ></textarea>
+              </label>
+            </div>
+
+            <details class="source-details">
+              <summary data-i18n-key="sourceDetailsSummary">OCR 원문 보기</summary>
+              <pre id="sourceTextPreview" class="source-preview" data-i18n-key="sourcePreviewEmpty">아직 OCR 결과가 없습니다.</pre>
+            </details>
+
+            <button id="previewButton" type="button" class="secondary-button full-width-button" data-i18n-key="step3Action">
+              주소 확인
+            </button>
+
+            <div class="candidate-section">
+              <div class="section-title-row compact-row">
+                <h3 class="mini-title" data-i18n-key="candidateSectionTitle">위치 후보</h3>
+                <span class="helper" data-i18n-key="candidateHelper">Geocoding result</span>
+              </div>
+              <div id="geocodeCandidates" class="candidate-list empty-state" data-i18n-key="candidateListEmpty">
+                아직 위치 후보가 없습니다.
+              </div>
+            </div>
+          </section>
+
+          <section id="saveStepSection" class="step-panel" hidden>
+            <div class="section-title-row compact-row">
+              <div>
+                <p class="section-kicker" data-i18n-key="step4Kicker">Step 4</p>
+                <h3 class="mini-title" data-i18n-key="step4Title">4. 저장</h3>
+              </div>
+            </div>
+            <p id="editModeHint" class="helper-text form-mode-hint" data-i18n-key="editModeHintNew">새 장소 저장 모드입니다.</p>
+            <div class="button-row save-actions-row">
+              <button id="saveParsedPlace" type="button" class="primary-button full-width-button" data-i18n-key="step4Action">
+                저장하기
+              </button>
+              <button id="cancelEditButton" type="button" class="secondary-button" hidden data-i18n-key="cancelEditButton">
+                수정 취소
+              </button>
+            </div>
+          </section>
         </section>
 
         <section class="controls panel filter-panel">

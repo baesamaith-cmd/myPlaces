@@ -423,6 +423,24 @@ summary:focus-visible {
   margin-top: 14px;
 }
 
+.hero-upload-action {
+  margin-top: 20px;
+}
+
+.hero-upload-action .action-button {
+  width: 100%;
+}
+
+.upload-stage-header {
+  margin-bottom: 16px;
+}
+
+.step-panel {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+}
+
 .form-mode-hint {
   margin: 16px 0 0;
 }
