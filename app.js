@@ -47,8 +47,13 @@ const translations = {
     parsedReasonLabel: '저장하는 이유',
     parsedReasonPlaceholder: '예: 면이 쫄깃하고 가격이 좋아서 다시 가고 싶음',
     sourceDetailsSummary: 'OCR 원문 보기',
+    sourcePreviewHint: '필요하면 전체 OCR 내용을 복사해서 다른 곳에 붙여넣으세요.',
+    copySourceTextButton: 'OCR 전체 복사',
     sourcePreviewEmpty: '아직 OCR 결과가 없습니다.',
     sourcePreviewUnavailable: '텍스트를 추출하지 못했습니다.',
+    sourceCopySuccess: 'OCR 전체 텍스트를 복사했어요.',
+    sourceCopyUnavailable: '복사할 OCR 텍스트가 아직 없습니다.',
+    sourceCopyError: '텍스트 복사에 실패했습니다. 직접 길게 눌러 복사해주세요.',
     candidateSectionTitle: '위치 후보',
     candidateHelper: '지오코딩 결과',
     candidateListEmpty: '아직 위치 후보가 없습니다.',
@@ -148,8 +153,13 @@ const translations = {
     parsedReasonLabel: 'Why save it',
     parsedReasonPlaceholder: 'e.g. chewy noodles and good value, want to come back',
     sourceDetailsSummary: 'View OCR text',
+    sourcePreviewHint: 'Copy the full OCR text and paste it anywhere else if needed.',
+    copySourceTextButton: 'Copy full OCR text',
     sourcePreviewEmpty: 'No OCR result yet.',
     sourcePreviewUnavailable: 'Could not extract text.',
+    sourceCopySuccess: 'Copied the full OCR text.',
+    sourceCopyUnavailable: 'There is no OCR text to copy yet.',
+    sourceCopyError: 'Could not copy the text. Please long-press and copy it manually.',
     candidateSectionTitle: 'Address candidates',
     candidateHelper: 'Geocoding result',
     candidateListEmpty: 'No address candidates yet.',
@@ -268,6 +278,7 @@ const ocrStatus = document.getElementById('ocrStatus');
 const syncStatus = document.getElementById('syncStatus');
 const selectedFileName = document.getElementById('selectedFileName');
 const sourceTextPreview = document.getElementById('sourceTextPreview');
+const copySourceTextButton = document.getElementById('copySourceTextButton');
 const geocodeCandidates = document.getElementById('geocodeCandidates');
 const editModeHint = document.getElementById('editModeHint');
 
@@ -336,6 +347,36 @@ function revealStep(section) {
   if (!section) return;
   section.hidden = false;
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateSourcePreview(text) {
+  const content = text || '';
+  sourceTextPreview.value = content;
+  sourceTextPreview.placeholder = t('sourcePreviewEmpty');
+}
+
+async function handleCopySourceText() {
+  const text = sourceTextPreview.value.trim();
+  if (!text) {
+    setStatus(t('sourceCopyUnavailable'), 'error');
+    return;
+  }
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      sourceTextPreview.focus();
+      sourceTextPreview.select();
+      document.execCommand('copy');
+    }
+    setStatus(t('sourceCopySuccess'), 'success');
+  } catch (error) {
+    console.error(error);
+    sourceTextPreview.focus();
+    sourceTextPreview.select();
+    setStatus(t('sourceCopyError'), 'error');
+  }
 }
 
 function getSupabaseConfig() {
@@ -868,7 +909,7 @@ async function handleRunOcr() {
     const parsed = parseRestaurantFields(rawText);
     latestParsedData = parsed;
     populateForm(parsed);
-    sourceTextPreview.textContent = parsed.sourceText || t('sourcePreviewUnavailable');
+    updateSourcePreview(parsed.sourceText || t('sourcePreviewUnavailable'));
     renderCandidateList([]);
     setStatus(t('ocrSuccess'), 'success');
     revealStep(reviewStepSection);
@@ -982,7 +1023,7 @@ imageUpload.addEventListener('change', () => {
   selectedFileName.textContent = file ? t('selectedFileChosen', { fileName: file.name }) : t('selectedFileNone');
   latestParsedData = null;
   latestSourceText = '';
-  sourceTextPreview.textContent = t('sourcePreviewEmpty');
+  updateSourcePreview('');
   stopEditingPlace();
   if (file) {
     setStepVisibility({ showOcr: true, showReview: false, showSave: false });
@@ -995,6 +1036,10 @@ cancelEditButton.addEventListener('click', () => {
   setStatus(t('editModeClosed'));
 });
 
+copySourceTextButton.addEventListener('click', () => {
+  void handleCopySourceText();
+});
+
 runOcrButton.addEventListener('click', handleRunOcr);
 previewButton.addEventListener('click', handlePreview);
 saveParsedPlaceButton.addEventListener('click', handleSave);
@@ -1002,5 +1047,6 @@ syncNowButton.addEventListener('click', handleSyncNow);
 categoryFilter.addEventListener('change', renderPlaces);
 
 applyTranslations();
+updateSourcePreview('');
 setSyncStatus(t('syncStatusConfigHint'));
 init();

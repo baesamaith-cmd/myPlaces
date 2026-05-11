@@ -57,6 +57,13 @@ test('index keeps only name address and reason input fields', () => {
   assert.doesNotMatch(html, /id="parsedCategory"/, 'category field should be removed');
 });
 
+test('index exposes full OCR text in a copy-friendly field', () => {
+  assert.match(html, /id="sourceTextPreview"/, 'full OCR text field should exist');
+  assert.match(html, /id="sourceTextPreview"[^>]*readonly/, 'full OCR text field should be read-only for easy copying');
+  assert.match(html, /id="sourceTextPreview"[^>]*data-i18n-placeholder="sourcePreviewEmpty"/, 'full OCR text field should have a localizable empty placeholder');
+  assert.match(html, /id="copySourceTextButton"/, 'copy OCR text button should exist');
+});
+
 test('app localizes UI from browser language instead of rendering both languages together', () => {
   assert.match(appJs, /navigator\.languages \?\? \[navigator\.language\]/, 'app should inspect browser language preferences');
   assert.match(appJs, /function detectPreferredLanguage\(/, 'app should detect the preferred UI language');
@@ -64,6 +71,13 @@ test('app localizes UI from browser language instead of rendering both languages
   assert.match(appJs, /function applyTranslations\(/, 'app should apply localized copy to the DOM');
   assert.match(appJs, /data-i18n-key/, 'app should look for localizable text nodes');
   assert.match(appJs, /data-i18n-placeholder/, 'app should localize placeholders too');
+});
+
+test('app keeps full OCR text selectable and supports copying it', () => {
+  assert.match(appJs, /const sourceTextPreview = document.getElementById\('sourceTextPreview'\);/, 'app should reference the OCR full text field');
+  assert.match(appJs, /const copySourceTextButton = document.getElementById\('copySourceTextButton'\);/, 'app should reference the OCR copy button');
+  assert.match(appJs, /sourceTextPreview\.value =/, 'app should write OCR text into the copy-friendly field');
+  assert.match(appJs, /navigator\.clipboard\.writeText\(/, 'app should copy OCR text to clipboard when requested');
 });
 
 test('app progressively reveals later ingestion steps and scrolls them into view on mobile', () => {

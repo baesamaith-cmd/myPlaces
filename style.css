@@ -550,9 +550,27 @@ summary:focus-visible {
   font-weight: 600;
 }
 
+.source-preview-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.source-preview-hint {
+  margin: 0;
+}
+
+.copy-source-button {
+  flex: 0 0 auto;
+  min-height: 40px;
+}
+
 .source-preview {
   margin: 10px 0 0;
   padding: 14px;
+  width: 100%;
   max-height: 200px;
   overflow: auto;
   border-radius: 16px;
@@ -563,6 +581,7 @@ summary:focus-visible {
   font-size: 12px;
   line-height: 1.6;
   white-space: pre-wrap;
+  resize: vertical;
 }
 
 .candidate-list {

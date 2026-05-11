@@ -117,7 +117,20 @@
 
             <details class="source-details">
               <summary data-i18n-key="sourceDetailsSummary">OCR 원문 보기</summary>
-              <pre id="sourceTextPreview" class="source-preview" data-i18n-key="sourcePreviewEmpty">아직 OCR 결과가 없습니다.</pre>
+              <div class="source-preview-actions">
+                <p class="helper-text source-preview-hint" data-i18n-key="sourcePreviewHint">필요하면 전체 OCR 내용을 복사해서 다른 곳에 붙여넣으세요.</p>
+                <button id="copySourceTextButton" type="button" class="secondary-button copy-source-button" data-i18n-key="copySourceTextButton">
+                  OCR 전체 복사
+                </button>
+              </div>
+              <textarea
+                id="sourceTextPreview"
+                class="source-preview"
+                rows="8"
+                readonly
+                data-i18n-placeholder="sourcePreviewEmpty"
+                placeholder="아직 OCR 결과가 없습니다."
+              ></textarea>
             </details>
 
             <p class="step-action-hint" data-i18n-key="stepActionHint">아래 큰 버튼을 누르면 다음으로 진행됩니다.</p>
