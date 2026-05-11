@@ -5,23 +5,22 @@ import { readFileSync } from 'node:fs';
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const appJs = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
 
-test('index exposes the bilingual four-step ingestion flow in order at the top of the sidebar', () => {
+test('index exposes a single-language four-step ingestion flow that JS can localize by browser language', () => {
   const heroSection = html.match(/<section class="hero-card panel">([\s\S]*?)<\/section>/);
 
   assert.ok(heroSection, 'hero section should exist');
-  assert.match(heroSection[1], /1\. 이미지 업로드 \| Image Upload/, 'step 1 should be bilingual');
-  assert.match(heroSection[1], /2\. OCR \| OCR/, 'step 2 should be bilingual');
-  assert.match(heroSection[1], /3\. 주소 확인 \| Confirm Address/, 'step 3 should be bilingual');
-  assert.match(heroSection[1], /4\. 저장 \| Save/, 'step 4 should be bilingual');
-  assert.match(
-    heroSection[1],
-    /1\. 이미지 업로드 \| Image Upload[\s\S]*2\. OCR \| OCR[\s\S]*3\. 주소 확인 \| Confirm Address[\s\S]*4\. 저장 \| Save/,
-    'top flow should present the bilingual four steps in order'
-  );
-  assert.match(heroSection[1], /for="imageUpload"[^>]*>[\s\S]*이미지 업로드[\s\S]*Image Upload[\s\S]*</, 'image upload action should be bilingual at top');
-  assert.match(heroSection[1], /id="runOcrButton"[^>]*>[\s\S]*OCR 실행[\s\S]*Run OCR[\s\S]*</, 'OCR action should be bilingual at top');
-  assert.match(heroSection[1], /id="previewButton"[^>]*>[\s\S]*주소 확인[\s\S]*Confirm Address[\s\S]*</, 'address confirmation action should be bilingual at top');
-  assert.match(heroSection[1], /id="saveParsedPlace"[^>]*>[\s\S]*저장하기[\s\S]*Save Place[\s\S]*</, 'save action should be bilingual at top');
+  assert.match(heroSection[1], /1\. 이미지 업로드/, 'step 1 should default to Korean in the HTML');
+  assert.match(heroSection[1], /2\. OCR/, 'step 2 should default to Korean in the HTML');
+  assert.match(heroSection[1], /3\. 주소 확인/, 'step 3 should default to Korean in the HTML');
+  assert.match(heroSection[1], /4\. 저장/, 'step 4 should default to Korean in the HTML');
+  assert.doesNotMatch(heroSection[1], /\|/, 'hero flow should not render bilingual copy side by side');
+  assert.match(heroSection[1], /data-i18n-key="heroTitle"/, 'hero title should be localizable');
+  assert.match(heroSection[1], /data-i18n-key="heroSubtitle"/, 'hero subtitle should be localizable');
+  assert.match(heroSection[1], /data-i18n-key="step1Title"/, 'step 1 title should be localizable');
+  assert.match(heroSection[1], /for="imageUpload"[^>]*data-i18n-key="step1Action"/, 'image upload action should be localizable');
+  assert.match(heroSection[1], /id="runOcrButton"[^>]*data-i18n-key="step2Action"/, 'OCR action should be localizable');
+  assert.match(heroSection[1], /id="previewButton"[^>]*data-i18n-key="step3Action"/, 'address confirmation action should be localizable');
+  assert.match(heroSection[1], /id="saveParsedPlace"[^>]*data-i18n-key="step4Action"/, 'save action should be localizable');
 });
 
 test('index exposes simplified shared Supabase controls', () => {
@@ -42,15 +41,27 @@ test('index keeps only name address and reason input fields', () => {
   assert.match(html, /id="parsedName"/, 'name field should exist');
   assert.match(html, /id="parsedAddress"/, 'address field should exist');
   assert.match(html, /id="parsedReason"/, 'reason field should exist');
+  assert.match(html, /id="parsedName"[^>]*data-i18n-placeholder="parsedNamePlaceholder"/, 'name placeholder should be localizable');
+  assert.match(html, /id="parsedAddress"[^>]*data-i18n-placeholder="parsedAddressPlaceholder"/, 'address placeholder should be localizable');
+  assert.match(html, /id="parsedReason"[^>]*data-i18n-placeholder="parsedReasonPlaceholder"/, 'reason placeholder should be localizable');
   assert.doesNotMatch(html, /id="parsedHours"/, 'hours field should be removed');
   assert.doesNotMatch(html, /id="parsedCategory"/, 'category field should be removed');
 });
 
-test('saved place cards include Google Maps view, directions, and edit actions but no delete action', () => {
-  assert.match(appJs, /구글맵에서 보기/, 'saved place card should expose Google Maps view action');
-  assert.match(appJs, /길찾기/, 'saved place card should expose directions action');
-  assert.match(appJs, /수정하기/, 'saved place card should expose edit action');
-  assert.doesNotMatch(appJs, /삭제하기/, 'saved place card should not expose delete action');
+test('app localizes UI from browser language instead of rendering both languages together', () => {
+  assert.match(appJs, /navigator\.languages \?\? \[navigator\.language\]/, 'app should inspect browser language preferences');
+  assert.match(appJs, /function detectPreferredLanguage\(/, 'app should detect the preferred UI language');
+  assert.match(appJs, /document\.documentElement\.lang = preferredLanguage/, 'app should update the document language');
+  assert.match(appJs, /function applyTranslations\(/, 'app should apply localized copy to the DOM');
+  assert.match(appJs, /data-i18n-key/, 'app should look for localizable text nodes');
+  assert.match(appJs, /data-i18n-placeholder/, 'app should localize placeholders too');
+});
+
+test('saved place cards keep edit and map actions but no delete action', () => {
+  assert.match(appJs, /placeActionView/, 'saved place card should expose a localized Google Maps view action');
+  assert.match(appJs, /placeActionDirections/, 'saved place card should expose a localized directions action');
+  assert.match(appJs, /placeActionEdit/, 'saved place card should expose a localized edit action');
+  assert.doesNotMatch(appJs, /삭제하기/, 'saved place card should not expose delete action text');
   assert.doesNotMatch(appJs, /place-delete-button/, 'saved place card should not render a delete button');
   assert.match(appJs, /google-maps-icon/, 'saved place card should render a Google Maps icon');
   assert.match(appJs, /place-card-glow/, 'saved place card should use the upgraded premium card shell');

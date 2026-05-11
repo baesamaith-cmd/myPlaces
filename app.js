@@ -12,6 +12,229 @@ const STORAGE_KEY = 'myPlaces.userPlaces.v1';
 const DEFAULT_CENTER = [1.3521, 103.8198];
 const DEFAULT_ZOOM = 12;
 
+const translations = {
+  ko: {
+    heroChip: '싱가포르 맛집 지도',
+    heroTitle: '맛집 캡처를 바로 지도에 올리기',
+    heroSubtitle: '이미지 업로드 → OCR → 주소 확인 → 저장의 4단계로 끝내는 맛집 저장 흐름',
+    captureKicker: '캡처 저장',
+    mvpBadge: 'MVP',
+    stepFlowAriaLabel: '맛집 저장 4단계',
+    step1Title: '1. 이미지 업로드',
+    step1Action: '이미지 업로드',
+    step2Title: '2. OCR',
+    step2Action: 'OCR 실행',
+    step3Title: '3. 주소 확인',
+    step3Action: '주소 확인',
+    step4Title: '4. 저장',
+    step4Action: '저장하기',
+    step4ActionEdit: '수정 저장',
+    selectedFileNone: '선택된 파일이 없습니다.',
+    selectedFileChosen: '선택된 파일: {fileName}',
+    uploadPanelTitle: 'OCR와 주소를 확인한 뒤 저장하세요',
+    uploadLabel: '이미지 바꾸기',
+    uploadDropzoneTitle: '다른 캡처로 다시 선택',
+    uploadDropzoneBody: '파일을 바꾸면 OCR과 주소 확인을 다시 실행할 수 있어요.',
+    parsedNameLabel: '가게 이름',
+    parsedNamePlaceholder: '예: JJ Sarawak Noodle',
+    parsedAddressLabel: '주소',
+    parsedAddressPlaceholder: '예: 3 Yung Sheng Rd, 03-127, Singapore 618499',
+    parsedReasonLabel: '저장하는 이유',
+    parsedReasonPlaceholder: '예: 면이 쫄깃하고 가격이 좋아서 다시 가고 싶음',
+    sourceDetailsSummary: 'OCR 원문 보기',
+    sourcePreviewEmpty: '아직 OCR 결과가 없습니다.',
+    sourcePreviewUnavailable: '텍스트를 추출하지 못했습니다.',
+    candidateSectionTitle: '위치 후보',
+    candidateHelper: '지오코딩 결과',
+    candidateListEmpty: '아직 위치 후보가 없습니다.',
+    candidateListNotFound: '위치 후보를 찾지 못했습니다. 주소를 수정한 뒤 다시 시도해보세요.',
+    candidateLabel: '후보 {index}',
+    editModeHintNew: '새 장소 저장 모드입니다.',
+    editModeHintEditing: '저장된 장소를 수정 중입니다. 필요하면 제목/주소를 바꾸고 다시 저장하세요.',
+    cancelEditButton: '수정 취소',
+    browseKicker: '둘러보기',
+    filterPanelTitle: '저장된 장소 필터',
+    categoryFilterLabel: '카테고리',
+    categoryAllOption: '전체',
+    sharedCloudKicker: '공용 클라우드',
+    sharedStorageTitle: '무료 Supabase 공용 저장소',
+    syncNowButton: '공용 저장소 새로고침',
+    syncStatusConfigHint: 'config.js에 Supabase 정보를 넣으면 여러 사람이 같은 맛집 목록을 함께 볼 수 있어요.',
+    syncStatusConfigHintDetailed: 'config.js에 Supabase URL과 anon key를 넣으면 여러 사람이 함께 쓰는 공용 저장소를 켤 수 있어요.',
+    syncStatusRunning: '공용 저장소와 동기화 중… 다른 사람이 저장한 장소를 합치고 있어요.',
+    syncStatusSuccess: '공용 저장소 동기화 완료. 현재 {count}개 장소가 함께 공유되고 있어요.',
+    syncStatusError: '공용 저장소 동기화 실패: {message}',
+    syncStatusConnected: '공용 저장소에 연결했어요. 페이지를 열면 자동으로 최신 목록을 받아옵니다.',
+    syncStatusClientError: 'Supabase 클라이언트를 만들지 못했습니다.',
+    syncStatusInitError: '공용 저장소 초기화에 실패했어요. README의 Supabase 설정을 다시 확인해주세요.',
+    collectionKicker: '모음',
+    savedPlacesTitle: '저장된 장소',
+    placeCount: '{count}개',
+    placeActionEdit: '수정하기',
+    placeActionView: '구글맵에서 보기',
+    placeActionDirections: '길찾기',
+    placeAddressMissing: '주소 정보 없음',
+    placeReasonMissing: '저장 이유 없음',
+    emptyPlacesTitle: '아직 저장된 장소가 없습니다',
+    emptyPlacesBody: 'OCR로 새 맛집을 추가하면 이 리스트와 지도에 바로 나타납니다.',
+    buildDescriptionAddressPrefix: '주소: {address}',
+    previewPlaceFallback: '미리보기 장소',
+    candidateSearchInProgress: '주소 후보를 확인하는 중…',
+    candidateSearchSuccess: '주소 후보를 찾았습니다. 위치를 확인한 뒤 4단계 저장을 누르세요.',
+    candidateSearchNeedInput: '먼저 OCR을 실행하거나 이름/주소를 입력해주세요.',
+    candidateSearchNoResult: '후보를 찾지 못했습니다. 주소나 이름을 조금 더 구체적으로 수정해보세요.',
+    candidateSearchError: '주소 확인 실패: {message}',
+    candidateSearchProviderError: 'Photon 지오코딩 실패: {status}',
+    ocrMissingFile: '먼저 이미지를 선택해주세요.',
+    ocrRunning: 'OCR 실행 중… 이미지에서 텍스트를 읽고 있어요. 첫 실행은 10~30초 정도 걸릴 수 있어요.',
+    ocrSuccess: 'OCR 완료. 추출된 필드를 확인한 뒤 3단계 주소 확인을 눌러주세요.',
+    ocrError: 'OCR 실패: {message}',
+    tesseractLoadError: 'Tesseract.js를 불러오지 못했습니다.',
+    supabaseLoadError: 'Supabase SDK를 불러오지 못했습니다.',
+    cloudFetchError: '공용 저장소를 불러오지 못했습니다: {message}',
+    cloudPushError: '공용 저장소 저장에 실패했습니다: {message}',
+    saveNeedsName: '저장하려면 가게 이름이 필요합니다.',
+    saveNeedsCandidate: '먼저 지도에 미리보기로 위치 후보를 선택해주세요.',
+    duplicatePlace: "이미 저장된 장소예요: '{name}'. 기존 항목을 수정해주세요.",
+    saveSuccessNew: "'{name}' 저장 완료. 이 기기와 공용 목록에 반영할게요.",
+    saveSuccessEdit: "'{name}' 수정 완료. 공용 목록에 반영할 준비가 됐어요.",
+    editModeStarted: "'{name}' 수정 모드입니다. 필드를 바꾸고 다시 저장하세요.",
+    editModeClosed: '수정 모드를 종료했어요. 새 장소를 저장하거나 다른 장소를 다시 선택할 수 있어요.',
+    initialDataError: '초기 데이터를 불러오지 못했습니다.',
+    localDataInitError: '로컬 데이터 초기화가 먼저 실패했어요.',
+    dataLoadFailed: '데이터를 불러오지 못했습니다.',
+    liveMapKicker: '실시간 지도',
+    mapPanelTitle: '싱가포르 맛집 보기',
+    mapBadgeOcr: 'OCR 가져오기',
+    mapBadgeAddress: '주소 확인',
+    mapAriaLabel: '맛집 지도',
+  },
+  en: {
+    heroChip: 'Singapore Food Map',
+    heroTitle: 'Save food finds from screenshots',
+    heroSubtitle: 'A simple 4-step flow: upload image → OCR → confirm address → save.',
+    captureKicker: 'Capture ingestion',
+    mvpBadge: 'MVP',
+    stepFlowAriaLabel: '4-step place save flow',
+    step1Title: '1. Image Upload',
+    step1Action: 'Image Upload',
+    step2Title: '2. OCR',
+    step2Action: 'Run OCR',
+    step3Title: '3. Confirm Address',
+    step3Action: 'Confirm Address',
+    step4Title: '4. Save',
+    step4Action: 'Save Place',
+    step4ActionEdit: 'Save Changes',
+    selectedFileNone: 'No file selected yet.',
+    selectedFileChosen: 'Selected file: {fileName}',
+    uploadPanelTitle: 'Review OCR and address before saving',
+    uploadLabel: 'Change image',
+    uploadDropzoneTitle: 'Pick another screenshot',
+    uploadDropzoneBody: 'Change the file to rerun OCR and address confirmation.',
+    parsedNameLabel: 'Place name',
+    parsedNamePlaceholder: 'e.g. JJ Sarawak Noodle',
+    parsedAddressLabel: 'Address',
+    parsedAddressPlaceholder: 'e.g. 3 Yung Sheng Rd, 03-127, Singapore 618499',
+    parsedReasonLabel: 'Why save it',
+    parsedReasonPlaceholder: 'e.g. chewy noodles and good value, want to come back',
+    sourceDetailsSummary: 'View OCR text',
+    sourcePreviewEmpty: 'No OCR result yet.',
+    sourcePreviewUnavailable: 'Could not extract text.',
+    candidateSectionTitle: 'Address candidates',
+    candidateHelper: 'Geocoding result',
+    candidateListEmpty: 'No address candidates yet.',
+    candidateListNotFound: 'No address candidates found. Update the address and try again.',
+    candidateLabel: 'Candidate {index}',
+    editModeHintNew: 'New place save mode.',
+    editModeHintEditing: 'Editing a saved place. Update the name or address, then save again.',
+    cancelEditButton: 'Cancel Edit',
+    browseKicker: 'Browse',
+    filterPanelTitle: 'Filter saved places',
+    categoryFilterLabel: 'Category',
+    categoryAllOption: 'All',
+    sharedCloudKicker: 'Shared cloud',
+    sharedStorageTitle: 'Free shared Supabase storage',
+    syncNowButton: 'Refresh shared storage',
+    syncStatusConfigHint: 'Add Supabase config to share one list with everyone.',
+    syncStatusConfigHintDetailed: 'Add the Supabase URL and anon key in config.js to enable a shared place list for everyone.',
+    syncStatusRunning: 'Syncing with shared storage… merging places saved by everyone.',
+    syncStatusSuccess: 'Shared storage sync complete. {count} places are now shared.',
+    syncStatusError: 'Shared storage sync failed: {message}',
+    syncStatusConnected: 'Connected to shared storage. The page will pull the latest list automatically.',
+    syncStatusClientError: 'Could not create the Supabase client.',
+    syncStatusInitError: 'Shared storage initialization failed. Please review the Supabase setup in the README.',
+    collectionKicker: 'Collection',
+    savedPlacesTitle: 'Saved places',
+    placeCount: '{count} places',
+    placeActionEdit: 'Edit',
+    placeActionView: 'View on Google Maps',
+    placeActionDirections: 'Directions',
+    placeAddressMissing: 'No address provided',
+    placeReasonMissing: 'No note provided',
+    emptyPlacesTitle: 'No saved places yet',
+    emptyPlacesBody: 'Add a new place with OCR and it will appear here and on the map.',
+    buildDescriptionAddressPrefix: 'Address: {address}',
+    previewPlaceFallback: 'Preview place',
+    candidateSearchInProgress: 'Checking address candidates…',
+    candidateSearchSuccess: 'Address candidates found. Confirm the location, then use step 4 to save.',
+    candidateSearchNeedInput: 'Run OCR first, or enter a name and address.',
+    candidateSearchNoResult: 'No candidates found. Try making the name or address more specific.',
+    candidateSearchError: 'Address confirmation failed: {message}',
+    candidateSearchProviderError: 'Photon geocoding failed: {status}',
+    ocrMissingFile: 'Choose an image first.',
+    ocrRunning: 'Running OCR… reading text from the image. The first run may take 10–30 seconds.',
+    ocrSuccess: 'OCR complete. Review the fields, then run step 3 to confirm the address.',
+    ocrError: 'OCR failed: {message}',
+    tesseractLoadError: 'Could not load Tesseract.js.',
+    supabaseLoadError: 'Could not load the Supabase SDK.',
+    cloudFetchError: 'Could not load shared storage: {message}',
+    cloudPushError: 'Failed to save to shared storage: {message}',
+    saveNeedsName: 'A place name is required before saving.',
+    saveNeedsCandidate: 'Select an address candidate on the map preview first.',
+    duplicatePlace: "This place is already saved: '{name}'. Edit the existing item instead.",
+    saveSuccessNew: "'{name}' saved. It will be reflected on this device and in the shared list.",
+    saveSuccessEdit: "'{name}' updated. It is ready to sync to the shared list.",
+    editModeStarted: "Editing '{name}'. Update the fields and save again.",
+    editModeClosed: 'Edit mode closed. Save a new place or select another saved place again.',
+    initialDataError: 'Could not load the initial data.',
+    localDataInitError: 'Local data initialization failed first.',
+    dataLoadFailed: 'Could not load the data.',
+    liveMapKicker: 'Live map',
+    mapPanelTitle: 'Singapore restaurant view',
+    mapBadgeOcr: 'OCR import',
+    mapBadgeAddress: 'Address confirm',
+    mapAriaLabel: 'Restaurant map',
+  },
+};
+
+function detectPreferredLanguage(languages = navigator.languages ?? [navigator.language]) {
+  const preferred = Array.isArray(languages) ? languages : [languages];
+  return preferred.some((value) => String(value || '').toLowerCase().startsWith('ko')) ? 'ko' : 'en';
+}
+
+const preferredLanguage = detectPreferredLanguage();
+document.documentElement.lang = preferredLanguage;
+
+function t(key, params = {}) {
+  const locale = translations[preferredLanguage] || translations.ko;
+  const template = locale[key] ?? translations.ko[key] ?? key;
+  return template.replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? `{${name}}`));
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n-key]').forEach((node) => {
+    node.textContent = t(node.dataset.i18nKey);
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => {
+    node.setAttribute('placeholder', t(node.dataset.i18nPlaceholder));
+  });
+
+  document.querySelectorAll('[data-i18n-aria-label]').forEach((node) => {
+    node.setAttribute('aria-label', t(node.dataset.i18nAriaLabel));
+  });
+}
+
 const map = L.map('map').setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -66,7 +289,7 @@ function escapeHtml(value) {
 function buildDescription(place) {
   const fragments = [];
   if (place.reason) fragments.push(place.reason);
-  if (place.address) fragments.push(`주소: ${place.address}`);
+  if (place.address) fragments.push(t('buildDescriptionAddressPrefix', { address: place.address }));
   return fragments.filter(Boolean).join(' · ');
 }
 
@@ -99,7 +322,7 @@ function ensureSupabaseClient() {
   if (supabaseClient) return supabaseClient;
   if (!isSupabaseConfigured()) return null;
   if (!window.supabase?.createClient) {
-    throw new Error('Supabase SDK를 불러오지 못했습니다.');
+    throw new Error(t('supabaseLoadError'));
   }
 
   const { url, anonKey } = getSupabaseConfig();
@@ -120,11 +343,9 @@ function updateSyncControls() {
 
 function updateFormMode() {
   const isEditing = Boolean(editingPlaceId);
-  saveParsedPlaceButton.textContent = isEditing ? '수정 저장' : '저장하기';
+  saveParsedPlaceButton.textContent = isEditing ? t('step4ActionEdit') : t('step4Action');
   cancelEditButton.hidden = !isEditing;
-  editModeHint.textContent = isEditing
-    ? '저장된 장소를 수정 중입니다. 필요하면 제목/주소를 바꾸고 다시 저장하세요. | Editing a saved place. Update the name or address, then save again.'
-    : '새 장소 저장 모드입니다. | New place save mode.';
+  editModeHint.textContent = isEditing ? t('editModeHintEditing') : t('editModeHintNew');
 }
 
 function startEditingPlace(place) {
@@ -134,7 +355,7 @@ function startEditingPlace(place) {
   populateForm(place);
   renderCandidateList([buildCandidateFromPlace(place)]);
   updateFormMode();
-  setStatus(`'${place.name}' 수정 모드입니다. 필드를 바꾸고 다시 저장하세요.`, 'success');
+  setStatus(t('editModeStarted', { name: place.name }), 'success');
 }
 
 function stopEditingPlace() {
@@ -143,7 +364,7 @@ function stopEditingPlace() {
   selectedGeocodeCandidate = null;
   clearPreviewMarker();
   geocodeCandidates.className = 'candidate-list empty-state';
-  geocodeCandidates.textContent = '아직 위치 후보가 없습니다. | No address candidates yet.';
+  geocodeCandidates.textContent = t('candidateListEmpty');
   updateFormMode();
 }
 
@@ -159,7 +380,7 @@ function clearMarkers() {
 }
 
 function renderCategories(places) {
-  categoryFilter.innerHTML = '<option value="all">전체</option>';
+  categoryFilter.innerHTML = `<option value="all">${escapeHtml(t('categoryAllOption'))}</option>`;
   categoryFilter.value = 'all';
 }
 
@@ -177,7 +398,7 @@ function isPlaceCardActionTarget(target) {
 function renderPlaces() {
   const filteredPlaces = allPlaces;
 
-  placeCount.textContent = `${filteredPlaces.length}개`;
+  placeCount.textContent = t('placeCount', { count: filteredPlaces.length });
   placeList.innerHTML = '';
   clearMarkers();
   setActiveCard(null);
@@ -203,13 +424,13 @@ function renderPlaces() {
       <div class="place-card-head">
         <div>
           <h3>${escapeHtml(place.name)}</h3>
-          <p class="place-card-address">${escapeHtml(place.address || '주소 정보 없음')}</p>
+          <p class="place-card-address">${escapeHtml(place.address || t('placeAddressMissing'))}</p>
         </div>
         <div class="place-card-head-actions">
-          <button type="button" class="place-edit-button">수정하기</button>
+          <button type="button" class="place-edit-button">${escapeHtml(t('placeActionEdit'))}</button>
         </div>
       </div>
-      <p>${escapeHtml(place.reason || '저장 이유 없음')}</p>
+      <p>${escapeHtml(place.reason || t('placeReasonMissing'))}</p>
       <div class="place-actions">
         <a
           class="place-action-link"
@@ -221,7 +442,7 @@ function renderPlaces() {
             <span class="gm-pin-head"></span>
             <span class="gm-pin-tail"></span>
           </span>
-          <span>구글맵에서 보기</span>
+          <span>${escapeHtml(t('placeActionView'))}</span>
         </a>
         <a
           class="place-action-link secondary"
@@ -233,7 +454,7 @@ function renderPlaces() {
             <span class="gm-pin-head"></span>
             <span class="gm-pin-tail"></span>
           </span>
-          <span>길찾기</span>
+          <span>${escapeHtml(t('placeActionDirections'))}</span>
         </a>
       </div>
     `;
@@ -269,8 +490,8 @@ function renderPlaces() {
     const item = document.createElement('li');
     item.className = 'place-card empty-place-card';
     item.innerHTML = `
-      <h3>아직 저장된 장소가 없습니다</h3>
-      <p>OCR로 새 맛집을 추가하면 이 리스트와 지도에 바로 나타납니다.</p>
+      <h3>${escapeHtml(t('emptyPlacesTitle'))}</h3>
+      <p>${escapeHtml(t('emptyPlacesBody'))}</p>
     `;
     placeList.appendChild(item);
   }
@@ -311,7 +532,7 @@ async function fetchRemotePlaces() {
     .order('updated_at', { ascending: false });
 
   if (error) {
-    throw new Error(`공용 저장소를 불러오지 못했습니다: ${error.message}`);
+    throw new Error(t('cloudFetchError', { message: error.message }));
   }
 
   return hydratePlacesFromRows(data || []);
@@ -326,7 +547,7 @@ async function pushPlacesToCloud(places) {
   });
 
   if (error) {
-    throw new Error(`공용 저장소 저장에 실패했습니다: ${error.message}`);
+    throw new Error(t('cloudPushError', { message: error.message }));
   }
 }
 
@@ -337,14 +558,14 @@ async function syncPlacesWithCloud(options = {}) {
   if (!client) {
     updateSyncControls();
     if (announce) {
-      setSyncStatus('config.js에 Supabase URL과 anon key를 넣으면 여러 사람이 함께 쓰는 공용 저장소를 켤 수 있어요.');
+      setSyncStatus(t('syncStatusConfigHintDetailed'));
     }
     return;
   }
 
   syncNowButton.disabled = true;
   if (announce) {
-    setSyncStatus('공용 저장소와 동기화 중… 다른 사람이 저장한 장소를 합치고 있어요.');
+    setSyncStatus(t('syncStatusRunning'));
   }
 
   try {
@@ -353,10 +574,10 @@ async function syncPlacesWithCloud(options = {}) {
     persistSavedPlaces();
     updateAllPlaces();
     await pushPlacesToCloud(userPlaces);
-    setSyncStatus(`공용 저장소 동기화 완료. 현재 ${userPlaces.length}개 장소가 함께 공유되고 있어요.`, 'success');
+    setSyncStatus(t('syncStatusSuccess', { count: userPlaces.length }), 'success');
   } catch (error) {
     console.error(error);
-    setSyncStatus(`공용 저장소 동기화 실패: ${error.message}`, 'error');
+    setSyncStatus(t('syncStatusError', { message: error.message }), 'error');
   } finally {
     updateSyncControls();
   }
@@ -366,17 +587,17 @@ async function restoreCloudSession() {
   updateSyncControls();
 
   if (!isSupabaseConfigured()) {
-    setSyncStatus('config.js에 Supabase URL과 anon key를 넣으면 여러 사람이 같은 맛집 목록을 함께 볼 수 있어요.');
+    setSyncStatus(t('syncStatusConfigHintDetailed'));
     return;
   }
 
   const client = ensureSupabaseClient();
   if (!client) {
-    setSyncStatus('Supabase 클라이언트를 만들지 못했습니다.', 'error');
+    setSyncStatus(t('syncStatusClientError'), 'error');
     return;
   }
 
-  setSyncStatus('공용 저장소에 연결했어요. 페이지를 열면 자동으로 최신 목록을 받아옵니다.', 'success');
+  setSyncStatus(t('syncStatusConnected'), 'success');
   await syncPlacesWithCloud({ announce: false });
 }
 
@@ -408,7 +629,7 @@ function renderCandidateList(candidates) {
 
   if (!candidates.length) {
     geocodeCandidates.className = 'candidate-list empty-state';
-    geocodeCandidates.textContent = '위치 후보를 찾지 못했습니다. 주소를 수정한 뒤 다시 시도해보세요. | No address candidates found. Update the address and try again.';
+    geocodeCandidates.textContent = t('candidateListNotFound');
     selectedGeocodeCandidate = null;
     clearPreviewMarker();
     return;
@@ -425,7 +646,7 @@ function renderCandidateList(candidates) {
       <div>
         <span class="candidate-title">
           <input type="radio" name="geocodeCandidate" value="${index}" ${index === 0 ? 'checked' : ''} />
-          후보 ${index + 1}
+          ${escapeHtml(t('candidateLabel', { index: index + 1 }))}
         </span>
         <p class="candidate-description">${escapeHtml(candidate.displayName)}</p>
       </div>
@@ -472,7 +693,7 @@ function selectCandidate(index) {
   const draft = readFormDraft();
   previewMarker.bindPopup(`
     <div>
-      <h3 class="popup-title">${escapeHtml(draft.name || '미리보기 장소')}</h3>
+      <h3 class="popup-title">${escapeHtml(draft.name || t('previewPlaceFallback'))}</h3>
       <p class="popup-desc">${escapeHtml(draft.address || selectedGeocodeCandidate.displayName)}</p>
     </div>
   `);
@@ -523,7 +744,7 @@ async function requestPhotonGeocode(query) {
   });
 
   if (!response.ok) {
-    throw new Error(`Photon 지오코딩 실패: ${response.status}`);
+    throw new Error(t('candidateSearchProviderError', { status: response.status }));
   }
 
   const payload = await response.json();
@@ -588,7 +809,7 @@ async function geocodeDraft(draft) {
 
 async function runOcr(file) {
   if (!window.Tesseract) {
-    throw new Error('Tesseract.js를 불러오지 못했습니다.');
+    throw new Error(t('tesseractLoadError'));
   }
 
   const result = await window.Tesseract.recognize(file, 'eng');
@@ -598,13 +819,13 @@ async function runOcr(file) {
 async function handleRunOcr() {
   const [file] = imageUpload.files;
   if (!file) {
-    setStatus('먼저 이미지를 선택해주세요.', 'error');
+    setStatus(t('ocrMissingFile'), 'error');
     return;
   }
 
   try {
     stopEditingPlace();
-    setStatus('OCR 실행 중… 이미지에서 텍스트를 읽고 있어요. 첫 실행은 10~30초 정도 걸릴 수 있어요.');
+    setStatus(t('ocrRunning'));
     runOcrButton.disabled = true;
     await new Promise((resolve) => window.requestAnimationFrame(resolve));
     const rawText = await runOcr(file);
@@ -612,12 +833,12 @@ async function handleRunOcr() {
     const parsed = parseRestaurantFields(rawText);
     latestParsedData = parsed;
     populateForm(parsed);
-    sourceTextPreview.textContent = parsed.sourceText || '텍스트를 추출하지 못했습니다.';
+    sourceTextPreview.textContent = parsed.sourceText || t('sourcePreviewUnavailable');
     renderCandidateList([]);
-    setStatus('OCR 완료. 추출된 필드를 확인한 뒤 3단계 주소 확인을 눌러주세요. | OCR complete. Review the fields, then run step 3 to confirm the address.', 'success');
+    setStatus(t('ocrSuccess'), 'success');
   } catch (error) {
     console.error(error);
-    setStatus(`OCR 실패: ${error.message}`, 'error');
+    setStatus(t('ocrError', { message: error.message }), 'error');
   } finally {
     runOcrButton.disabled = false;
   }
@@ -626,23 +847,23 @@ async function handlePreview() {
   const draft = readFormDraft();
 
   if (!draft.address && !draft.name) {
-    setStatus('먼저 OCR을 실행하거나 이름/주소를 입력해주세요. | Run OCR first, or enter a name and address.', 'error');
+    setStatus(t('candidateSearchNeedInput'), 'error');
     return;
   }
 
   try {
     previewButton.disabled = true;
-    setStatus('주소 후보를 확인하는 중… | Checking address candidates…');
+    setStatus(t('candidateSearchInProgress'));
     const candidates = await geocodeDraft(draft);
     renderCandidateList(candidates);
     if (candidates.length) {
-      setStatus('주소 후보를 찾았습니다. 위치를 확인한 뒤 4단계 저장을 누르세요. | Address candidates found. Confirm the location, then use step 4 to save.', 'success');
+      setStatus(t('candidateSearchSuccess'), 'success');
     } else {
-      setStatus('후보를 찾지 못했습니다. 주소나 이름을 조금 더 구체적으로 수정해보세요.', 'error');
+      setStatus(t('candidateSearchNoResult'), 'error');
     }
   } catch (error) {
     console.error(error);
-    setStatus(`주소 확인 실패 | Address confirmation failed: ${error.message}`, 'error');
+    setStatus(t('candidateSearchError', { message: error.message }), 'error');
   } finally {
     previewButton.disabled = false;
   }
@@ -651,11 +872,11 @@ async function handlePreview() {
 function handleSave() {
   const draft = readFormDraft();
   if (!draft.name) {
-    setStatus('저장하려면 가게 이름이 필요합니다.', 'error');
+    setStatus(t('saveNeedsName'), 'error');
     return;
   }
   if (!selectedGeocodeCandidate) {
-    setStatus('먼저 지도에 미리보기로 위치 후보를 선택해주세요.', 'error');
+    setStatus(t('saveNeedsCandidate'), 'error');
     return;
   }
 
@@ -672,7 +893,7 @@ function handleSave() {
 
   const duplicatePlace = findDuplicatePlace(userPlaces, placeRecord);
   if (duplicatePlace) {
-    setStatus(`이미 저장된 장소예요: '${duplicatePlace.name}'. 기존 항목을 수정하거나 삭제해주세요.`, 'error');
+    setStatus(t('duplicatePlace', { name: duplicatePlace.name }), 'error');
     return;
   }
 
@@ -680,8 +901,8 @@ function handleSave() {
   persistSavedPlaces();
   updateAllPlaces();
   const message = editingPlaceId
-    ? `'${placeRecord.name}' 수정 완료. 공용 목록에 반영할 준비가 됐어요.`
-    : `'${placeRecord.name}' 저장 완료. 이 기기와 공용 목록에 반영할게요.`;
+    ? t('saveSuccessEdit', { name: placeRecord.name })
+    : t('saveSuccessNew', { name: placeRecord.name });
   stopEditingPlace();
   setStatus(message, 'success');
 
@@ -702,9 +923,9 @@ async function init() {
     updateAllPlaces();
   } catch (error) {
     console.error(error);
-    placeList.innerHTML = '<li class="place-card">데이터를 불러오지 못했습니다.</li>';
-    setStatus('초기 데이터를 불러오지 못했습니다.', 'error');
-    setSyncStatus('로컬 데이터 초기화가 먼저 실패했어요.', 'error');
+    placeList.innerHTML = `<li class="place-card">${escapeHtml(t('dataLoadFailed'))}</li>`;
+    setStatus(t('initialDataError'), 'error');
+    setSyncStatus(t('localDataInitError'), 'error');
     return;
   }
 
@@ -712,18 +933,18 @@ async function init() {
     await restoreCloudSession();
   } catch (error) {
     console.error(error);
-    setSyncStatus('공용 저장소 초기화에 실패했어요. README의 Supabase 설정을 다시 확인해주세요.', 'error');
+    setSyncStatus(t('syncStatusInitError'), 'error');
   }
 }
 
 imageUpload.addEventListener('change', () => {
   const [file] = imageUpload.files;
-  selectedFileName.textContent = file ? `선택된 파일 | Selected file: ${file.name}` : '선택된 파일이 없습니다. | No file selected yet.';
+  selectedFileName.textContent = file ? t('selectedFileChosen', { fileName: file.name }) : t('selectedFileNone');
 });
 
 cancelEditButton.addEventListener('click', () => {
   stopEditingPlace();
-  setStatus('수정 모드를 종료했어요. 새 장소를 저장하거나 다른 장소를 다시 선택할 수 있어요. | Edit mode closed. Save a new place or choose another saved place again.');
+  setStatus(t('editModeClosed'));
 });
 
 runOcrButton.addEventListener('click', handleRunOcr);
@@ -732,4 +953,6 @@ saveParsedPlaceButton.addEventListener('click', handleSave);
 syncNowButton.addEventListener('click', handleSyncNow);
 categoryFilter.addEventListener('change', renderPlaces);
 
+applyTranslations();
+setSyncStatus(t('syncStatusConfigHint'));
 init();

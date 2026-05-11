@@ -31,106 +31,108 @@
         <section class="hero-card panel">
           <div class="hero-topline">
             <p class="eyebrow">myPlaces</p>
-            <span class="hero-chip">Singapore Food Map</span>
+            <span class="hero-chip" data-i18n-key="heroChip">Singapore Food Map</span>
           </div>
 
-          <h1>맛집 캡처를 바로 지도에 올리기 | Save food finds from screenshots</h1>
-          <p class="subtitle">이미지 업로드 → OCR → 주소 확인 → 저장의 4단계로 끝내는 맛집 저장 흐름 | A simple 4-step flow: upload image → OCR → confirm address → save.</p>
+          <h1 data-i18n-key="heroTitle">맛집 캡처를 바로 지도에 올리기</h1>
+          <p class="subtitle" data-i18n-key="heroSubtitle">이미지 업로드 → OCR → 주소 확인 → 저장의 4단계로 끝내는 맛집 저장 흐름</p>
 
-          <ol class="step-flow" aria-label="맛집 저장 4단계 | 4-step save flow">
+          <ol class="step-flow" aria-label="맛집 저장 4단계" data-i18n-aria-label="stepFlowAriaLabel">
             <li class="step-card">
-              <p class="step-title">1. 이미지 업로드 | Image Upload</p>
-              <label for="imageUpload" class="secondary-button action-button">
-                이미지 업로드 | Image Upload
+              <p class="step-title" data-i18n-key="step1Title">1. 이미지 업로드</p>
+              <label for="imageUpload" class="secondary-button action-button" data-i18n-key="step1Action">
+                이미지 업로드
               </label>
             </li>
             <li class="step-card">
-              <p class="step-title">2. OCR | OCR</p>
-              <button id="runOcrButton" type="button" class="primary-button">
-                OCR 실행 | Run OCR
+              <p class="step-title" data-i18n-key="step2Title">2. OCR</p>
+              <button id="runOcrButton" type="button" class="primary-button" data-i18n-key="step2Action">
+                OCR 실행
               </button>
             </li>
             <li class="step-card">
-              <p class="step-title">3. 주소 확인 | Confirm Address</p>
-              <button id="previewButton" type="button" class="secondary-button">
-                주소 확인 | Confirm Address
+              <p class="step-title" data-i18n-key="step3Title">3. 주소 확인</p>
+              <button id="previewButton" type="button" class="secondary-button" data-i18n-key="step3Action">
+                주소 확인
               </button>
             </li>
             <li class="step-card">
-              <p class="step-title">4. 저장 | Save</p>
-              <button id="saveParsedPlace" type="button" class="primary-button">
-                저장하기 | Save Place
+              <p class="step-title" data-i18n-key="step4Title">4. 저장</p>
+              <button id="saveParsedPlace" type="button" class="primary-button" data-i18n-key="step4Action">
+                저장하기
               </button>
             </li>
           </ol>
 
-          <p id="selectedFileName" class="hero-helper-text">선택된 파일이 없습니다. | No file selected yet.</p>
+          <p id="selectedFileName" class="hero-helper-text" data-i18n-key="selectedFileNone">선택된 파일이 없습니다.</p>
         </section>
 
         <section class="panel upload-panel">
           <div class="section-title-row">
             <div>
-              <p class="section-kicker">Capture ingestion</p>
-              <h2>OCR와 주소를 확인한 뒤 저장하세요 | Review OCR and address before saving</h2>
+              <p class="section-kicker" data-i18n-key="captureKicker">Capture ingestion</p>
+              <h2 data-i18n-key="uploadPanelTitle">OCR와 주소를 확인한 뒤 저장하세요</h2>
             </div>
-            <span class="helper badge-soft">MVP</span>
+            <span class="helper badge-soft" data-i18n-key="mvpBadge">MVP</span>
           </div>
 
-          <label class="upload-label" for="imageUpload">이미지 바꾸기 | Change image</label>
+          <label class="upload-label" for="imageUpload" data-i18n-key="uploadLabel">이미지 바꾸기</label>
           <div class="upload-dropzone">
             <input id="imageUpload" type="file" accept="image/*" />
             <div class="dropzone-copy">
-              <strong>다른 캡처로 다시 선택 | Pick another screenshot</strong>
-              <p>파일을 바꾸면 OCR과 주소 확인을 다시 실행할 수 있어요. | Change the file to rerun OCR and address confirmation.</p>
+              <strong data-i18n-key="uploadDropzoneTitle">다른 캡처로 다시 선택</strong>
+              <p data-i18n-key="uploadDropzoneBody">파일을 바꾸면 OCR과 주소 확인을 다시 실행할 수 있어요.</p>
             </div>
           </div>
 
           <p id="ocrStatus" class="status-message" aria-live="polite">
-            이미지를 선택하고 OCR 실행을 눌러주세요. | Choose an image and run OCR.
+            이미지를 선택하고 OCR 실행을 눌러주세요.
           </p>
 
           <div class="form-grid">
             <label>
-              가게 이름 | Place name
-              <input id="parsedName" type="text" placeholder="예: JJ Sarawak Noodle" />
+              <span data-i18n-key="parsedNameLabel">가게 이름</span>
+              <input id="parsedName" type="text" placeholder="예: JJ Sarawak Noodle" data-i18n-placeholder="parsedNamePlaceholder" />
             </label>
             <label>
-              주소 | Address
+              <span data-i18n-key="parsedAddressLabel">주소</span>
               <input
                 id="parsedAddress"
                 type="text"
                 placeholder="예: 3 Yung Sheng Rd, 03-127, Singapore 618499"
+                data-i18n-placeholder="parsedAddressPlaceholder"
               />
             </label>
             <label class="full-width">
-              저장하는 이유 | Why save it
+              <span data-i18n-key="parsedReasonLabel">저장하는 이유</span>
               <textarea
                 id="parsedReason"
                 rows="3"
                 placeholder="예: 면이 쫄깃하고 가격이 좋아서 다시 가고 싶음"
+                data-i18n-placeholder="parsedReasonPlaceholder"
               ></textarea>
             </label>
           </div>
 
           <details class="source-details">
-            <summary>OCR 원문 보기 | View OCR text</summary>
-            <pre id="sourceTextPreview" class="source-preview">아직 OCR 결과가 없습니다. | No OCR result yet.</pre>
+            <summary data-i18n-key="sourceDetailsSummary">OCR 원문 보기</summary>
+            <pre id="sourceTextPreview" class="source-preview" data-i18n-key="sourcePreviewEmpty">아직 OCR 결과가 없습니다.</pre>
           </details>
 
           <div class="candidate-section">
             <div class="section-title-row compact-row">
-              <h3 class="mini-title">위치 후보 | Address candidates</h3>
-              <span class="helper">Geocoding result</span>
+              <h3 class="mini-title" data-i18n-key="candidateSectionTitle">위치 후보</h3>
+              <span class="helper" data-i18n-key="candidateHelper">Geocoding result</span>
             </div>
-            <div id="geocodeCandidates" class="candidate-list empty-state">
-              아직 위치 후보가 없습니다. | No address candidates yet.
+            <div id="geocodeCandidates" class="candidate-list empty-state" data-i18n-key="candidateListEmpty">
+              아직 위치 후보가 없습니다.
             </div>
           </div>
 
-          <p id="editModeHint" class="helper-text form-mode-hint">새 장소 저장 모드입니다. | New place save mode.</p>
+          <p id="editModeHint" class="helper-text form-mode-hint" data-i18n-key="editModeHintNew">새 장소 저장 모드입니다.</p>
           <div class="button-row save-actions-row">
-            <button id="cancelEditButton" type="button" class="secondary-button" hidden>
-              수정 취소 | Cancel Edit
+            <button id="cancelEditButton" type="button" class="secondary-button" hidden data-i18n-key="cancelEditButton">
+              수정 취소
             </button>
           </div>
         </section>
@@ -138,11 +140,11 @@
         <section class="controls panel filter-panel">
           <div class="section-title-row compact-row">
             <div>
-              <p class="section-kicker">Browse</p>
-              <h2>저장된 장소 필터 | Filter saved places</h2>
+              <p class="section-kicker" data-i18n-key="browseKicker">Browse</p>
+              <h2 data-i18n-key="filterPanelTitle">저장된 장소 필터</h2>
             </div>
           </div>
-          <label for="categoryFilter">카테고리 | Category</label>
+          <label for="categoryFilter" data-i18n-key="categoryFilterLabel">카테고리</label>
           <select id="categoryFilter">
             <option value="all">전체</option>
           </select>
@@ -150,15 +152,15 @@
           <div class="sync-tools">
             <div class="section-title-row compact-row storage-row">
               <div>
-                <p class="section-kicker">Shared cloud</p>
-                <h3 class="mini-title">무료 Supabase 공용 저장소 | Free shared Supabase storage</h3>
+                <p class="section-kicker" data-i18n-key="sharedCloudKicker">Shared cloud</p>
+                <h3 class="mini-title" data-i18n-key="sharedStorageTitle">무료 Supabase 공용 저장소</h3>
               </div>
             </div>
-            <button id="syncNowButton" type="button" class="primary-button full-width-button">
-              공용 저장소 새로고침 | Refresh shared storage
+            <button id="syncNowButton" type="button" class="primary-button full-width-button" data-i18n-key="syncNowButton">
+              공용 저장소 새로고침
             </button>
             <p id="syncStatus" class="status-message" aria-live="polite">
-              config.js에 Supabase 정보를 넣으면 여러 사람이 같은 맛집 목록을 함께 볼 수 있어요. | Add Supabase config to share one list with everyone.
+              config.js에 Supabase 정보를 넣으면 여러 사람이 같은 맛집 목록을 함께 볼 수 있어요.
             </p>
           </div>
         </section>
@@ -166,8 +168,8 @@
         <section class="panel list-panel">
           <div class="list-header">
             <div>
-              <p class="section-kicker">Collection</p>
-              <h2>저장된 장소 | Saved places</h2>
+              <p class="section-kicker" data-i18n-key="collectionKicker">Collection</p>
+              <h2 data-i18n-key="savedPlacesTitle">저장된 장소</h2>
             </div>
             <span id="placeCount">0개</span>
           </div>
@@ -179,15 +181,15 @@
         <section class="map-frame">
           <div class="map-header panel">
             <div>
-              <p class="section-kicker">Live map</p>
-              <h2>Singapore restaurant view</h2>
+              <p class="section-kicker" data-i18n-key="liveMapKicker">Live map</p>
+              <h2 data-i18n-key="mapPanelTitle">Singapore restaurant view</h2>
             </div>
             <div class="map-badges">
-              <span class="badge">OCR import</span>
-              <span class="badge">Address confirm</span>
+              <span class="badge" data-i18n-key="mapBadgeOcr">OCR import</span>
+              <span class="badge" data-i18n-key="mapBadgeAddress">Address confirm</span>
             </div>
           </div>
-          <div id="map" aria-label="맛집 지도"></div>
+          <div id="map" aria-label="맛집 지도" data-i18n-aria-label="mapAriaLabel"></div>
         </section>
       </main>
     </div>
