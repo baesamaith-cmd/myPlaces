@@ -52,6 +52,7 @@ const translations = {
     fillNameFromOcrButton: '3-2. 선택 텍스트 → 가게 이름',
     fillAddressFromOcrButton: '3-3. 선택 텍스트 → 주소',
     fillReasonFromOcrButton: '3-4. 선택 텍스트 → 저장 이유',
+    appendSourceTextToggleLabel: '선택 텍스트를 기존 입력 뒤에 이어붙이기',
     sourcePreviewEmpty: '아직 OCR 결과가 없습니다.',
     sourcePreviewUnavailable: '텍스트를 추출하지 못했습니다.',
     sourceCopySuccess: 'OCR 전체 텍스트를 복사했어요.',
@@ -163,6 +164,7 @@ const translations = {
     fillNameFromOcrButton: '3-2. Selected text → Place name',
     fillAddressFromOcrButton: '3-3. Selected text → Address',
     fillReasonFromOcrButton: '3-4. Selected text → Why save it',
+    appendSourceTextToggleLabel: 'Append selected text to the existing field value',
     sourcePreviewEmpty: 'No OCR result yet.',
     sourcePreviewUnavailable: 'Could not extract text.',
     sourceCopySuccess: 'Copied the full OCR text.',
@@ -292,6 +294,7 @@ const copySourceTextButton = document.getElementById('copySourceTextButton');
 const fillNameFromOcrButton = document.getElementById('fillNameFromOcrButton');
 const fillAddressFromOcrButton = document.getElementById('fillAddressFromOcrButton');
 const fillReasonFromOcrButton = document.getElementById('fillReasonFromOcrButton');
+const appendSourceTextToggle = document.getElementById('appendSourceTextToggle');
 const geocodeCandidates = document.getElementById('geocodeCandidates');
 const editModeHint = document.getElementById('editModeHint');
 
@@ -440,6 +443,12 @@ function getSelectedSourceText() {
   return selectedText || text.trim();
 }
 
+function buildFieldInsertValue(fieldKey, currentValue, snippet, shouldAppend = appendSourceTextToggle.checked) {
+  if (!shouldAppend || !currentValue.trim()) return snippet;
+  const separator = fieldKey === 'reason' ? '\n' : ' ';
+  return `${currentValue.trim()}${separator}${snippet}`.trim();
+}
+
 function applyOcrTextToField(fieldKey) {
   const field = fieldRefs[fieldKey];
   const snippet = getSelectedSourceText();
@@ -448,7 +457,7 @@ function applyOcrTextToField(fieldKey) {
     return;
   }
 
-  field.value = snippet;
+  field.value = buildFieldInsertValue(fieldKey, field.value, snippet);
   field.focus();
   if (typeof field.setSelectionRange === 'function') {
     const end = field.value.length;
@@ -961,12 +970,71 @@ async function geocodeDraft(draft) {
   return results.slice(0, 3);
 }
 
+async function preprocessImageForOcr(file) {
+  if (typeof document === 'undefined' || !document.createElement) {
+    return file;
+  }
+
+  const createObjectUrl = URL?.createObjectURL ? URL.createObjectURL.bind(URL) : null;
+  const revokeObjectUrl = URL?.revokeObjectURL ? URL.revokeObjectURL.bind(URL) : null;
+  if (!createObjectUrl) return file;
+
+  const objectUrl = createObjectUrl(file);
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('image-load-failed'));
+      img.src = objectUrl;
+    });
+
+    const maxDimension = 2200;
+    const minWidth = 1600;
+    const sourceWidth = Math.max(image.naturalWidth || image.width || 1, 1);
+    const sourceHeight = Math.max(image.naturalHeight || image.height || 1, 1);
+    const upscaleRatio = sourceWidth < minWidth ? minWidth / sourceWidth : 1;
+    const downscaleRatio = Math.max(sourceWidth, sourceHeight) > maxDimension ? maxDimension / Math.max(sourceWidth, sourceHeight) : 1;
+    const ratio = Math.min(Math.max(upscaleRatio, downscaleRatio), 2);
+    const targetWidth = Math.max(1, Math.round(sourceWidth * ratio));
+    const targetHeight = Math.max(1, Math.round(sourceHeight * ratio));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return file;
+
+    ctx.filter = 'grayscale(1) contrast(1.35) brightness(1.08)';
+    ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+    ctx.filter = 'none';
+
+    return await new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          resolve(file);
+          return;
+        }
+        resolve(new File([blob], `${file.name || 'ocr-image'}.preprocessed.png`, {
+          type: 'image/png',
+          lastModified: Date.now(),
+        }));
+      }, 'image/png');
+    });
+  } catch (error) {
+    console.warn('OCR preprocessing skipped', error);
+    return file;
+  } finally {
+    if (revokeObjectUrl) revokeObjectUrl(objectUrl);
+  }
+}
+
 async function runOcr(file) {
   if (!window.Tesseract) {
     throw new Error(t('tesseractLoadError'));
   }
 
-  const result = await window.Tesseract.recognize(file, 'eng');
+  const preparedImage = await preprocessImageForOcr(file);
+  const result = await window.Tesseract.recognize(preparedImage, 'eng');
   return result.data.text;
 }
 

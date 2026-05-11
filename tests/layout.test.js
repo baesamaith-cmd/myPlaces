@@ -74,6 +74,8 @@ test('index exposes quick OCR insert actions for name address and reason fields'
   assert.match(html, /id="fillNameFromOcrButton"[^>]*data-i18n-key="fillNameFromOcrButton"/, 'name quick-insert action should exist');
   assert.match(html, /id="fillAddressFromOcrButton"[^>]*data-i18n-key="fillAddressFromOcrButton"/, 'address quick-insert action should exist');
   assert.match(html, /id="fillReasonFromOcrButton"[^>]*data-i18n-key="fillReasonFromOcrButton"/, 'reason quick-insert action should exist');
+  assert.match(html, /id="appendSourceTextToggle"/, 'append mode toggle should exist for OCR helper actions');
+  assert.match(html, /data-i18n-key="appendSourceTextToggleLabel"/, 'append mode toggle label should be localizable');
   assert.match(html, /class="[^"]*source-preview-actions[^"]*"/, 'quick-insert actions should live with the OCR source preview controls');
 });
 
@@ -97,12 +99,21 @@ test('app can insert selected OCR text into name address and reason fields', () 
   assert.match(appJs, /const fillNameFromOcrButton = document.getElementById\('fillNameFromOcrButton'\);/, 'app should reference the OCR-to-name quick action');
   assert.match(appJs, /const fillAddressFromOcrButton = document.getElementById\('fillAddressFromOcrButton'\);/, 'app should reference the OCR-to-address quick action');
   assert.match(appJs, /const fillReasonFromOcrButton = document.getElementById\('fillReasonFromOcrButton'\);/, 'app should reference the OCR-to-reason quick action');
+  assert.match(appJs, /const appendSourceTextToggle = document.getElementById\('appendSourceTextToggle'\);/, 'app should reference the append-mode toggle');
   assert.match(appJs, /function getSelectedSourceText\(/, 'app should derive a selected OCR snippet before filling fields');
-  assert.match(appJs, /function applyOcrTextToField\(/, 'app should centralize quick OCR insertion into form fields');
-  assert.match(appJs, /field\.value = snippet;/, 'quick OCR insert should place the selected snippet into the chosen field');
+  assert.match(appJs, /function buildFieldInsertValue\(/, 'app should support append-aware insertion values');
+  assert.match(appJs, /appendSourceTextToggle\.checked/, 'quick OCR insert should respect append mode');
+  assert.match(appJs, /field\.value = buildFieldInsertValue\(/, 'quick OCR insert should use append-aware field updates');
   assert.match(appJs, /fillNameFromOcrButton\.addEventListener\('click'/, 'name quick action should be wired');
   assert.match(appJs, /fillAddressFromOcrButton\.addEventListener\('click'/, 'address quick action should be wired');
   assert.match(appJs, /fillReasonFromOcrButton\.addEventListener\('click'/, 'reason quick action should be wired');
+});
+
+test('app preprocesses screenshots before OCR to improve recognition quality', () => {
+  assert.match(appJs, /async function preprocessImageForOcr\(/, 'app should preprocess screenshots before OCR');
+  assert.match(appJs, /canvas\.getContext\('2d'/, 'OCR preprocessing should use a canvas context');
+  assert.match(appJs, /ctx\.filter = 'grayscale\(1\) contrast\(1\.35\) brightness\(1\.08\)'/, 'OCR preprocessing should increase grayscale contrast and brightness');
+  assert.match(appJs, /window\.Tesseract\.recognize\(preparedImage, 'eng'/, 'OCR should run against the preprocessed image when possible');
 });
 
 test('app numbers the guided mobile flow buttons so users can follow the order clearly', () => {

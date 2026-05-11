@@ -575,6 +575,18 @@ summary:focus-visible {
   gap: 8px;
 }
 
+.source-append-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.source-append-toggle input {
+  margin: 0;
+}
+
 .source-preview-hint {
   margin: 0;
 }
