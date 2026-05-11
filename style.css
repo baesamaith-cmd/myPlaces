@@ -563,10 +563,16 @@ summary:focus-visible {
 
 .source-preview-actions {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   gap: 12px;
   margin-top: 10px;
+}
+
+.source-preview-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .source-preview-hint {

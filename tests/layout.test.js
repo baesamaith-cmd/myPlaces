@@ -70,6 +70,13 @@ test('index exposes full OCR text in a copy-friendly field', () => {
   assert.match(html, /id="copySourceTextButton"/, 'copy OCR text button should exist');
 });
 
+test('index exposes quick OCR insert actions for name address and reason fields', () => {
+  assert.match(html, /id="fillNameFromOcrButton"[^>]*data-i18n-key="fillNameFromOcrButton"/, 'name quick-insert action should exist');
+  assert.match(html, /id="fillAddressFromOcrButton"[^>]*data-i18n-key="fillAddressFromOcrButton"/, 'address quick-insert action should exist');
+  assert.match(html, /id="fillReasonFromOcrButton"[^>]*data-i18n-key="fillReasonFromOcrButton"/, 'reason quick-insert action should exist');
+  assert.match(html, /class="[^"]*source-preview-actions[^"]*"/, 'quick-insert actions should live with the OCR source preview controls');
+});
+
 test('app localizes UI from browser language instead of rendering both languages together', () => {
   assert.match(appJs, /navigator\.languages \?\? \[navigator\.language\]/, 'app should inspect browser language preferences');
   assert.match(appJs, /function detectPreferredLanguage\(/, 'app should detect the preferred UI language');
@@ -86,16 +93,34 @@ test('app keeps full OCR text selectable and supports copying it', () => {
   assert.match(appJs, /navigator\.clipboard\.writeText\(/, 'app should copy OCR text to clipboard when requested');
 });
 
+test('app can insert selected OCR text into name address and reason fields', () => {
+  assert.match(appJs, /const fillNameFromOcrButton = document.getElementById\('fillNameFromOcrButton'\);/, 'app should reference the OCR-to-name quick action');
+  assert.match(appJs, /const fillAddressFromOcrButton = document.getElementById\('fillAddressFromOcrButton'\);/, 'app should reference the OCR-to-address quick action');
+  assert.match(appJs, /const fillReasonFromOcrButton = document.getElementById\('fillReasonFromOcrButton'\);/, 'app should reference the OCR-to-reason quick action');
+  assert.match(appJs, /function getSelectedSourceText\(/, 'app should derive a selected OCR snippet before filling fields');
+  assert.match(appJs, /function applyOcrTextToField\(/, 'app should centralize quick OCR insertion into form fields');
+  assert.match(appJs, /field\.value = snippet;/, 'quick OCR insert should place the selected snippet into the chosen field');
+  assert.match(appJs, /fillNameFromOcrButton\.addEventListener\('click'/, 'name quick action should be wired');
+  assert.match(appJs, /fillAddressFromOcrButton\.addEventListener\('click'/, 'address quick action should be wired');
+  assert.match(appJs, /fillReasonFromOcrButton\.addEventListener\('click'/, 'reason quick action should be wired');
+});
+
 test('app numbers the guided mobile flow buttons so users can follow the order clearly', () => {
   assert.match(appJs, /step1Action: '1\. 이미지 업로드'/, 'Korean upload action should include step number 1');
   assert.match(appJs, /step2Action: '2\. OCR 실행'/, 'Korean OCR action should include step number 2');
   assert.match(appJs, /copySourceTextButton: '3-1\. OCR 전체 복사'/, 'Korean OCR copy action should include a sub-step number');
+  assert.match(appJs, /fillNameFromOcrButton: '3-2\. 선택 텍스트 → 가게 이름'/, 'Korean OCR-to-name action should include a sub-step number');
+  assert.match(appJs, /fillAddressFromOcrButton: '3-3\. 선택 텍스트 → 주소'/, 'Korean OCR-to-address action should include a sub-step number');
+  assert.match(appJs, /fillReasonFromOcrButton: '3-4\. 선택 텍스트 → 저장 이유'/, 'Korean OCR-to-reason action should include a sub-step number');
   assert.match(appJs, /step3Action: '3\. 주소 확인'/, 'Korean address confirmation action should include step number 3');
   assert.match(appJs, /step4Action: '4\. 저장하기'/, 'Korean save action should include step number 4');
   assert.match(appJs, /cancelEditButton: '4-1\. 수정 취소'/, 'Korean cancel edit action should include a sub-step number');
   assert.match(appJs, /step1Action: '1\. Image Upload'/, 'English upload action should include step number 1');
   assert.match(appJs, /step2Action: '2\. Run OCR'/, 'English OCR action should include step number 2');
   assert.match(appJs, /copySourceTextButton: '3-1\. Copy full OCR text'/, 'English OCR copy action should include a sub-step number');
+  assert.match(appJs, /fillNameFromOcrButton: '3-2\. Selected text → Place name'/, 'English OCR-to-name action should include a sub-step number');
+  assert.match(appJs, /fillAddressFromOcrButton: '3-3\. Selected text → Address'/, 'English OCR-to-address action should include a sub-step number');
+  assert.match(appJs, /fillReasonFromOcrButton: '3-4\. Selected text → Why save it'/, 'English OCR-to-reason action should include a sub-step number');
   assert.match(appJs, /step3Action: '3\. Confirm Address'/, 'English address confirmation action should include step number 3');
   assert.match(appJs, /step4Action: '4\. Save Place'/, 'English save action should include step number 4');
   assert.match(appJs, /cancelEditButton: '4-1\. Cancel Edit'/, 'English cancel edit action should include a sub-step number');

@@ -119,9 +119,20 @@
               <summary data-i18n-key="sourceDetailsSummary">OCR 원문 보기</summary>
               <div class="source-preview-actions">
                 <p class="helper-text source-preview-hint" data-i18n-key="sourcePreviewHint">필요하면 전체 OCR 내용을 복사해서 다른 곳에 붙여넣으세요.</p>
-                <button id="copySourceTextButton" type="button" class="primary-button copy-source-button" data-i18n-key="copySourceTextButton">
-                  3-1. OCR 전체 복사
-                </button>
+                <div class="source-preview-button-group">
+                  <button id="copySourceTextButton" type="button" class="primary-button copy-source-button" data-i18n-key="copySourceTextButton">
+                    3-1. OCR 전체 복사
+                  </button>
+                  <button id="fillNameFromOcrButton" type="button" class="primary-button copy-source-button" data-i18n-key="fillNameFromOcrButton">
+                    3-2. 선택 텍스트 → 가게 이름
+                  </button>
+                  <button id="fillAddressFromOcrButton" type="button" class="primary-button copy-source-button" data-i18n-key="fillAddressFromOcrButton">
+                    3-3. 선택 텍스트 → 주소
+                  </button>
+                  <button id="fillReasonFromOcrButton" type="button" class="primary-button copy-source-button" data-i18n-key="fillReasonFromOcrButton">
+                    3-4. 선택 텍스트 → 저장 이유
+                  </button>
+                </div>
               </div>
               <textarea
                 id="sourceTextPreview"

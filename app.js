@@ -49,11 +49,16 @@ const translations = {
     sourceDetailsSummary: 'OCR 원문 보기',
     sourcePreviewHint: '필요하면 전체 OCR 내용을 복사해서 다른 곳에 붙여넣으세요.',
     copySourceTextButton: '3-1. OCR 전체 복사',
+    fillNameFromOcrButton: '3-2. 선택 텍스트 → 가게 이름',
+    fillAddressFromOcrButton: '3-3. 선택 텍스트 → 주소',
+    fillReasonFromOcrButton: '3-4. 선택 텍스트 → 저장 이유',
     sourcePreviewEmpty: '아직 OCR 결과가 없습니다.',
     sourcePreviewUnavailable: '텍스트를 추출하지 못했습니다.',
     sourceCopySuccess: 'OCR 전체 텍스트를 복사했어요.',
     sourceCopyUnavailable: '복사할 OCR 텍스트가 아직 없습니다.',
     sourceCopyError: '텍스트 복사에 실패했습니다. 직접 길게 눌러 복사해주세요.',
+    sourceSelectionMissing: '먼저 OCR 원문에서 넣고 싶은 줄이나 문장을 선택해주세요.',
+    sourceApplySuccess: '선택한 OCR 텍스트를 {field} 칸에 넣었어요.',
     candidateSectionTitle: '위치 후보',
     candidateHelper: '지오코딩 결과',
     candidateListEmpty: '아직 위치 후보가 없습니다.',
@@ -155,11 +160,16 @@ const translations = {
     sourceDetailsSummary: 'View OCR text',
     sourcePreviewHint: 'Copy the full OCR text and paste it anywhere else if needed.',
     copySourceTextButton: '3-1. Copy full OCR text',
+    fillNameFromOcrButton: '3-2. Selected text → Place name',
+    fillAddressFromOcrButton: '3-3. Selected text → Address',
+    fillReasonFromOcrButton: '3-4. Selected text → Why save it',
     sourcePreviewEmpty: 'No OCR result yet.',
     sourcePreviewUnavailable: 'Could not extract text.',
     sourceCopySuccess: 'Copied the full OCR text.',
     sourceCopyUnavailable: 'There is no OCR text to copy yet.',
     sourceCopyError: 'Could not copy the text. Please long-press and copy it manually.',
+    sourceSelectionMissing: 'Select the OCR line or snippet you want to insert first.',
+    sourceApplySuccess: 'Placed the selected OCR text into the {field} field.',
     candidateSectionTitle: 'Address candidates',
     candidateHelper: 'Geocoding result',
     candidateListEmpty: 'No address candidates yet.',
@@ -279,6 +289,9 @@ const syncStatus = document.getElementById('syncStatus');
 const selectedFileName = document.getElementById('selectedFileName');
 const sourceTextPreview = document.getElementById('sourceTextPreview');
 const copySourceTextButton = document.getElementById('copySourceTextButton');
+const fillNameFromOcrButton = document.getElementById('fillNameFromOcrButton');
+const fillAddressFromOcrButton = document.getElementById('fillAddressFromOcrButton');
+const fillReasonFromOcrButton = document.getElementById('fillReasonFromOcrButton');
 const geocodeCandidates = document.getElementById('geocodeCandidates');
 const editModeHint = document.getElementById('editModeHint');
 
@@ -417,6 +430,34 @@ async function handleCopySourceText() {
     sourceTextPreview.select();
     setStatus(t('sourceCopyError'), 'error');
   }
+}
+
+function getSelectedSourceText() {
+  const text = sourceTextPreview.value || '';
+  const selectionStart = sourceTextPreview.selectionStart ?? 0;
+  const selectionEnd = sourceTextPreview.selectionEnd ?? 0;
+  const selectedText = text.slice(selectionStart, selectionEnd).trim();
+  return selectedText || text.trim();
+}
+
+function applyOcrTextToField(fieldKey) {
+  const field = fieldRefs[fieldKey];
+  const snippet = getSelectedSourceText();
+  if (!field || !snippet) {
+    setStatus(t('sourceSelectionMissing'), 'error');
+    return;
+  }
+
+  field.value = snippet;
+  field.focus();
+  if (typeof field.setSelectionRange === 'function') {
+    const end = field.value.length;
+    field.setSelectionRange(end, end);
+  }
+
+  const fieldLabelNode = document.querySelector(`[data-i18n-key="parsed${fieldKey.charAt(0).toUpperCase()}${fieldKey.slice(1)}Label"]`);
+  const fieldLabel = fieldLabelNode?.textContent?.trim() || fieldKey;
+  setStatus(t('sourceApplySuccess', { field: fieldLabel }), 'success');
 }
 
 function getSupabaseConfig() {
@@ -1078,6 +1119,18 @@ cancelEditButton.addEventListener('click', () => {
 
 copySourceTextButton.addEventListener('click', () => {
   void handleCopySourceText();
+});
+
+fillNameFromOcrButton.addEventListener('click', () => {
+  applyOcrTextToField('name');
+});
+
+fillAddressFromOcrButton.addEventListener('click', () => {
+  applyOcrTextToField('address');
+});
+
+fillReasonFromOcrButton.addEventListener('click', () => {
+  applyOcrTextToField('reason');
 });
 
 runOcrButton.addEventListener('click', handleRunOcr);
