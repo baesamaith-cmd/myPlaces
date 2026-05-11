@@ -21,13 +21,13 @@ const translations = {
     mvpBadge: 'MVP',
     stepFlowAriaLabel: '맛집 저장 4단계',
     step1Title: '1. 이미지 업로드',
-    step1Action: '이미지 업로드',
+    step1Action: '1. 이미지 업로드',
     step2Title: '2. OCR',
-    step2Action: 'OCR 실행',
+    step2Action: '2. OCR 실행',
     step3Title: '3. 주소 확인',
-    step3Action: '주소 확인',
+    step3Action: '3. 주소 확인',
     step4Title: '4. 저장',
-    step4Action: '저장하기',
+    step4Action: '4. 저장하기',
     step4ActionEdit: '수정 저장',
     selectedFileNone: '선택된 파일이 없습니다.',
     selectedFileChosen: '선택된 파일: {fileName}',
@@ -48,7 +48,7 @@ const translations = {
     parsedReasonPlaceholder: '예: 면이 쫄깃하고 가격이 좋아서 다시 가고 싶음',
     sourceDetailsSummary: 'OCR 원문 보기',
     sourcePreviewHint: '필요하면 전체 OCR 내용을 복사해서 다른 곳에 붙여넣으세요.',
-    copySourceTextButton: 'OCR 전체 복사',
+    copySourceTextButton: '3-1. OCR 전체 복사',
     sourcePreviewEmpty: '아직 OCR 결과가 없습니다.',
     sourcePreviewUnavailable: '텍스트를 추출하지 못했습니다.',
     sourceCopySuccess: 'OCR 전체 텍스트를 복사했어요.',
@@ -61,7 +61,7 @@ const translations = {
     candidateLabel: '후보 {index}',
     editModeHintNew: '새 장소 저장 모드입니다.',
     editModeHintEditing: '저장된 장소를 수정 중입니다. 필요하면 제목/주소를 바꾸고 다시 저장하세요.',
-    cancelEditButton: '수정 취소',
+    cancelEditButton: '4-1. 수정 취소',
     browseKicker: '둘러보기',
     filterPanelTitle: '저장된 장소 필터',
     categoryFilterLabel: '카테고리',
@@ -127,13 +127,13 @@ const translations = {
     mvpBadge: 'MVP',
     stepFlowAriaLabel: '4-step place save flow',
     step1Title: '1. Image Upload',
-    step1Action: 'Image Upload',
+    step1Action: '1. Image Upload',
     step2Title: '2. OCR',
-    step2Action: 'Run OCR',
+    step2Action: '2. Run OCR',
     step3Title: '3. Confirm Address',
-    step3Action: 'Confirm Address',
+    step3Action: '3. Confirm Address',
     step4Title: '4. Save',
-    step4Action: 'Save Place',
+    step4Action: '4. Save Place',
     step4ActionEdit: 'Save Changes',
     selectedFileNone: 'No file selected yet.',
     selectedFileChosen: 'Selected file: {fileName}',
@@ -154,7 +154,7 @@ const translations = {
     parsedReasonPlaceholder: 'e.g. chewy noodles and good value, want to come back',
     sourceDetailsSummary: 'View OCR text',
     sourcePreviewHint: 'Copy the full OCR text and paste it anywhere else if needed.',
-    copySourceTextButton: 'Copy full OCR text',
+    copySourceTextButton: '3-1. Copy full OCR text',
     sourcePreviewEmpty: 'No OCR result yet.',
     sourcePreviewUnavailable: 'Could not extract text.',
     sourceCopySuccess: 'Copied the full OCR text.',
@@ -167,7 +167,7 @@ const translations = {
     candidateLabel: 'Candidate {index}',
     editModeHintNew: 'New place save mode.',
     editModeHintEditing: 'Editing a saved place. Update the name or address, then save again.',
-    cancelEditButton: 'Cancel Edit',
+    cancelEditButton: '4-1. Cancel Edit',
     browseKicker: 'Browse',
     filterPanelTitle: 'Filter saved places',
     categoryFilterLabel: 'Category',
@@ -343,10 +343,50 @@ function setStepVisibility({
   saveStepSection.hidden = !showSave;
 }
 
+function isCompactMobileViewport() {
+  if (window.matchMedia) {
+    return window.matchMedia('(max-width: 768px)').matches;
+  }
+  return window.innerWidth <= 768;
+}
+
+function isElementComfortablyVisible(section) {
+  if (!section || typeof section.getBoundingClientRect !== 'function') return false;
+
+  const rect = section.getBoundingClientRect();
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+  if (!viewportHeight) return false;
+
+  const topPadding = isCompactMobileViewport() ? 72 : 24;
+  const bottomPadding = isCompactMobileViewport() ? Math.max(140, Math.round(viewportHeight * 0.24)) : 24;
+
+  return rect.top >= topPadding && rect.bottom <= viewportHeight - bottomPadding;
+}
+
+function shouldCenterStepOnMobile(section) {
+  if (!isCompactMobileViewport()) return false;
+  if (!section || typeof section.getBoundingClientRect !== 'function') return true;
+
+  const rect = section.getBoundingClientRect();
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+  if (!viewportHeight) return true;
+
+  return rect.height <= viewportHeight * 0.78;
+}
+
+function buildStepScrollOptions(section) {
+  return {
+    behavior: 'smooth',
+    block: shouldCenterStepOnMobile(section) ? 'center' : 'start',
+    inline: 'nearest',
+  };
+}
+
 function revealStep(section) {
   if (!section) return;
   section.hidden = false;
-  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (isElementComfortablyVisible(section)) return;
+  section.scrollIntoView(buildStepScrollOptions(section));
 }
 
 function updateSourcePreview(text) {

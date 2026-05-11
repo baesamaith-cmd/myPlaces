@@ -86,13 +86,33 @@ test('app keeps full OCR text selectable and supports copying it', () => {
   assert.match(appJs, /navigator\.clipboard\.writeText\(/, 'app should copy OCR text to clipboard when requested');
 });
 
-test('app progressively reveals later ingestion steps and scrolls them into view on mobile', () => {
+test('app numbers the guided mobile flow buttons so users can follow the order clearly', () => {
+  assert.match(appJs, /step1Action: '1\. 이미지 업로드'/, 'Korean upload action should include step number 1');
+  assert.match(appJs, /step2Action: '2\. OCR 실행'/, 'Korean OCR action should include step number 2');
+  assert.match(appJs, /copySourceTextButton: '3-1\. OCR 전체 복사'/, 'Korean OCR copy action should include a sub-step number');
+  assert.match(appJs, /step3Action: '3\. 주소 확인'/, 'Korean address confirmation action should include step number 3');
+  assert.match(appJs, /step4Action: '4\. 저장하기'/, 'Korean save action should include step number 4');
+  assert.match(appJs, /cancelEditButton: '4-1\. 수정 취소'/, 'Korean cancel edit action should include a sub-step number');
+  assert.match(appJs, /step1Action: '1\. Image Upload'/, 'English upload action should include step number 1');
+  assert.match(appJs, /step2Action: '2\. Run OCR'/, 'English OCR action should include step number 2');
+  assert.match(appJs, /copySourceTextButton: '3-1\. Copy full OCR text'/, 'English OCR copy action should include a sub-step number');
+  assert.match(appJs, /step3Action: '3\. Confirm Address'/, 'English address confirmation action should include step number 3');
+  assert.match(appJs, /step4Action: '4\. Save Place'/, 'English save action should include step number 4');
+  assert.match(appJs, /cancelEditButton: '4-1\. Cancel Edit'/, 'English cancel edit action should include a sub-step number');
+});
+
+test('app progressively reveals later ingestion steps and uses smartphone-friendly auto-scroll rules', () => {
   assert.match(appJs, /const ocrStepSection = document.getElementById\('ocrStepSection'\);/, 'app should reference the OCR step section');
   assert.match(appJs, /const reviewStepSection = document.getElementById\('reviewStepSection'\);/, 'app should reference the review step section');
   assert.match(appJs, /const saveStepSection = document.getElementById\('saveStepSection'\);/, 'app should reference the save step section');
   assert.match(appJs, /function setStepVisibility\(/, 'app should control which step panels are visible');
-  assert.match(appJs, /function revealStep\(/, 'app should reveal a step and bring it into view');
-  assert.match(appJs, /scrollIntoView\(/, 'app should scroll the next step into view when progressing');
+  assert.match(appJs, /function isCompactMobileViewport\(/, 'app should detect smartphone-sized viewports before forcing scroll behavior');
+  assert.match(appJs, /function isElementComfortablyVisible\(/, 'app should skip extra scrolling when the next step is already visible enough');
+  assert.match(appJs, /function shouldCenterStepOnMobile\(/, 'app should distinguish short mobile sections from tall ones before centering');
+  assert.match(appJs, /function buildStepScrollOptions\(section\)/, 'app should centralize tuned scroll behavior for each step reveal');
+  assert.match(appJs, /block: shouldCenterStepOnMobile\(section\) \? 'center' : 'start'/, 'mobile auto-scroll should center short sections but top-align tall ones');
+  assert.match(appJs, /if \(isElementComfortablyVisible\(section\)\) return;/, 'app should avoid unnecessary scroll jumps when the section is already visible');
+  assert.match(appJs, /scrollIntoView\(buildStepScrollOptions\(section\)\)/, 'app should use the tuned scroll options when progressing');
 });
 
 test('saved place cards keep edit and map actions but no delete action', () => {
