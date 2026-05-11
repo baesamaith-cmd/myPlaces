@@ -126,6 +126,46 @@ function inferReason(parsed) {
   return fragments.join(' · ');
 }
 
+export function buildOcrLineSuggestions(rawText = '') {
+  const sourceText = normalizeOcrText(rawText);
+  const lines = sourceText.split('\n').map((line) => line.trim()).filter(Boolean);
+  const parsed = parseRestaurantFields(sourceText);
+  const suggestions = [];
+
+  const pushSuggestion = (text, field) => {
+    const normalized = String(text || '').trim();
+    if (!normalized) return;
+    if (suggestions.some((item) => item.text === normalized)) return;
+    suggestions.push({ text: normalized, field });
+  };
+
+  pushSuggestion(parsed.name, 'name');
+  pushSuggestion(parsed.address, 'address');
+  if (lines.includes(parsed.reason)) {
+    pushSuggestion(parsed.reason, 'reason');
+  }
+
+  lines.forEach((line) => {
+    if (suggestions.length >= 6) return;
+    if (line === parsed.name || line === parsed.address || line === parsed.reason) return;
+    if (/^foodstamp/i.test(line)) return;
+    if (/best|authentic|famous|must-try|featured|open|daily|nearby|station|recommended|signature|special|why/i.test(line) && line !== parsed.reason) return;
+    if (/\$\d/.test(line) && !/best|authentic|famous|must-try|signature|special|추천|맛집/i.test(line)) return;
+
+    let field = 'reason';
+    if (line === parsed.name) field = 'name';
+    else if (line === parsed.address || /Singapore\s*\d{6}/i.test(line) || (/\b(?:Rd|Road|St|Street|Ave|Avenue|Dr|Drive|Lane|Lor|Jln)\b/i.test(line) && /\d/.test(line))) {
+      field = 'address';
+    } else if (!/\d/.test(line) && line.split(/\s+/).length <= 4 && !/best|authentic|famous|must-try|featured|open|daily|nearby|station|recommended|signature|special|why/i.test(line)) {
+      field = 'name';
+    }
+
+    pushSuggestion(line, field);
+  });
+
+  return suggestions.slice(0, 6);
+}
+
 function slugify(value) {
   return value
     .toLowerCase()

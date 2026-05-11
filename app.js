@@ -1,4 +1,4 @@
-import { buildPlaceRecord, parseRestaurantFields } from './parser.js';
+import { buildPlaceRecord, buildOcrLineSuggestions, parseRestaurantFields } from './parser.js';
 import {
   buildSupabaseRows,
   hydratePlacesFromRows,
@@ -53,6 +53,7 @@ const translations = {
     fillAddressFromOcrButton: '3-3. 선택 텍스트 → 주소',
     fillReasonFromOcrButton: '3-4. 선택 텍스트 → 저장 이유',
     appendSourceTextToggleLabel: '선택 텍스트를 기존 입력 뒤에 이어붙이기',
+    ocrLineSuggestionsTitle: '추천 줄 바로 넣기',
     sourcePreviewEmpty: '아직 OCR 결과가 없습니다.',
     sourcePreviewUnavailable: '텍스트를 추출하지 못했습니다.',
     sourceCopySuccess: 'OCR 전체 텍스트를 복사했어요.',
@@ -165,6 +166,7 @@ const translations = {
     fillAddressFromOcrButton: '3-3. Selected text → Address',
     fillReasonFromOcrButton: '3-4. Selected text → Why save it',
     appendSourceTextToggleLabel: 'Append selected text to the existing field value',
+    ocrLineSuggestionsTitle: 'Suggested OCR lines',
     sourcePreviewEmpty: 'No OCR result yet.',
     sourcePreviewUnavailable: 'Could not extract text.',
     sourceCopySuccess: 'Copied the full OCR text.',
@@ -290,6 +292,7 @@ const ocrStatus = document.getElementById('ocrStatus');
 const syncStatus = document.getElementById('syncStatus');
 const selectedFileName = document.getElementById('selectedFileName');
 const sourceTextPreview = document.getElementById('sourceTextPreview');
+const ocrLineSuggestionList = document.getElementById('ocrLineSuggestionList');
 const copySourceTextButton = document.getElementById('copySourceTextButton');
 const fillNameFromOcrButton = document.getElementById('fillNameFromOcrButton');
 const fillAddressFromOcrButton = document.getElementById('fillAddressFromOcrButton');
@@ -411,6 +414,63 @@ function updateSourcePreview(text) {
   sourceTextPreview.placeholder = t('sourcePreviewEmpty');
 }
 
+function getFieldLabel(fieldKey) {
+  const fieldLabelNode = document.querySelector(`[data-i18n-key="parsed${fieldKey.charAt(0).toUpperCase()}${fieldKey.slice(1)}Label"]`);
+  return fieldLabelNode?.textContent?.trim() || fieldKey;
+}
+
+function renderOcrLineSuggestions(rawText, parsed = parseRestaurantFields(rawText)) {
+  if (!ocrLineSuggestionList) return;
+
+  const prioritizedTexts = [parsed?.name, parsed?.address, parsed?.reason].map((value) => String(value || '').trim()).filter(Boolean);
+  const suggestions = buildOcrLineSuggestions(rawText)
+    .filter((suggestion) => suggestion?.text && suggestion?.field)
+    .sort((a, b) => {
+      const left = prioritizedTexts.indexOf(a.text);
+      const right = prioritizedTexts.indexOf(b.text);
+      return (left === -1 ? 99 : left) - (right === -1 ? 99 : right);
+    })
+    .slice(0, 6);
+
+  if (!suggestions.length) {
+    ocrLineSuggestionList.innerHTML = '';
+    ocrLineSuggestionList.hidden = true;
+    return;
+  }
+
+  ocrLineSuggestionList.hidden = false;
+  ocrLineSuggestionList.innerHTML = suggestions.map((suggestion, index) => `
+    <button
+      type="button"
+      class="ocr-line-chip"
+      data-field="${escapeHtml(suggestion.field)}"
+      data-text="${escapeHtml(suggestion.text)}"
+      aria-label="${escapeHtml(`${getFieldLabel(suggestion.field)}: ${suggestion.text}`)}"
+    >
+      <span class="ocr-line-chip-label">${escapeHtml(getFieldLabel(suggestion.field))}</span>
+      <span class="ocr-line-chip-text">${escapeHtml(suggestion.text)}</span>
+    </button>
+  `).join('');
+}
+
+function applySuggestedOcrLine(fieldKey, snippet) {
+  const field = fieldRefs[fieldKey];
+  const normalizedSnippet = String(snippet || '').trim();
+  if (!field || !normalizedSnippet) {
+    setStatus(t('sourceSelectionMissing'), 'error');
+    return;
+  }
+
+  field.value = buildFieldInsertValue(fieldKey, field.value, normalizedSnippet);
+  field.focus();
+  if (typeof field.setSelectionRange === 'function') {
+    const end = field.value.length;
+    field.setSelectionRange(end, end);
+  }
+
+  setStatus(t('sourceApplySuccess', { field: getFieldLabel(fieldKey) }), 'success');
+}
+
 async function handleCopySourceText() {
   const text = sourceTextPreview.value.trim();
   if (!text) {
@@ -450,23 +510,13 @@ function buildFieldInsertValue(fieldKey, currentValue, snippet, shouldAppend = a
 }
 
 function applyOcrTextToField(fieldKey) {
-  const field = fieldRefs[fieldKey];
   const snippet = getSelectedSourceText();
-  if (!field || !snippet) {
+  if (!snippet) {
     setStatus(t('sourceSelectionMissing'), 'error');
     return;
   }
 
-  field.value = buildFieldInsertValue(fieldKey, field.value, snippet);
-  field.focus();
-  if (typeof field.setSelectionRange === 'function') {
-    const end = field.value.length;
-    field.setSelectionRange(end, end);
-  }
-
-  const fieldLabelNode = document.querySelector(`[data-i18n-key="parsed${fieldKey.charAt(0).toUpperCase()}${fieldKey.slice(1)}Label"]`);
-  const fieldLabel = fieldLabelNode?.textContent?.trim() || fieldKey;
-  setStatus(t('sourceApplySuccess', { field: fieldLabel }), 'success');
+  applySuggestedOcrLine(fieldKey, snippet);
 }
 
 function getSupabaseConfig() {
@@ -513,6 +563,8 @@ function startEditingPlace(place) {
   latestParsedData = { ...place };
   latestSourceText = place.sourceText || '';
   populateForm(place);
+  updateSourcePreview(latestSourceText);
+  renderOcrLineSuggestions(latestSourceText, place);
   renderCandidateList([buildCandidateFromPlace(place)]);
   setStepVisibility({ showOcr: true, showReview: true, showSave: true });
   updateFormMode();
@@ -527,6 +579,8 @@ function stopEditingPlace() {
   clearPreviewMarker();
   geocodeCandidates.className = 'candidate-list empty-state';
   geocodeCandidates.textContent = t('candidateListEmpty');
+  updateSourcePreview('');
+  renderOcrLineSuggestions('');
   setStepVisibility({ showOcr: Boolean(imageUpload.files?.length), showReview: false, showSave: false });
   updateFormMode();
 }
@@ -1059,6 +1113,7 @@ async function handleRunOcr() {
     latestParsedData = parsed;
     populateForm(parsed);
     updateSourcePreview(parsed.sourceText || t('sourcePreviewUnavailable'));
+    renderOcrLineSuggestions(rawText, parsed);
     renderCandidateList([]);
     setStatus(t('ocrSuccess'), 'success');
     revealStep(reviewStepSection);
@@ -1173,6 +1228,7 @@ imageUpload.addEventListener('change', () => {
   latestParsedData = null;
   latestSourceText = '';
   updateSourcePreview('');
+  renderOcrLineSuggestions('');
   stopEditingPlace();
   if (file) {
     setStepVisibility({ showOcr: true, showReview: false, showSave: false });
@@ -1201,6 +1257,12 @@ fillReasonFromOcrButton.addEventListener('click', () => {
   applyOcrTextToField('reason');
 });
 
+ocrLineSuggestionList?.addEventListener('click', (event) => {
+  const button = event.target.closest('.ocr-line-chip');
+  if (!button) return;
+  applySuggestedOcrLine(button.dataset.field, button.dataset.text);
+});
+
 runOcrButton.addEventListener('click', handleRunOcr);
 previewButton.addEventListener('click', handlePreview);
 saveParsedPlaceButton.addEventListener('click', handleSave);
@@ -1209,5 +1271,6 @@ categoryFilter.addEventListener('change', renderPlaces);
 
 applyTranslations();
 updateSourcePreview('');
+renderOcrLineSuggestions('');
 setSyncStatus(t('syncStatusConfigHint'));
 init();

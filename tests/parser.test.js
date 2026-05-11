@@ -4,6 +4,7 @@ import {
   normalizeOcrText,
   parseRestaurantFields,
   buildPlaceRecord,
+  buildOcrLineSuggestions,
 } from '../parser.js';
 
 const sampleText = `foodstamp.sg Singapore
@@ -51,6 +52,21 @@ crispy chicken wing, sambal and otah
 
   assert.equal(parsed.name, 'AMOY STREET NASI LEMAK');
   assert.equal(parsed.address, '7 Maxwell Road, Singapore 069111');
+});
+
+test('buildOcrLineSuggestions returns tappable line candidates with field suggestions', () => {
+  const suggestions = buildOcrLineSuggestions(`featured by foodies
+AMOY STREET NASI LEMAK
+7 Maxwell Road, Singapore 069111
+crispy chicken wing, sambal and otah`);
+
+  assert.equal(suggestions.length, 3);
+  assert.deepEqual(suggestions.map((item) => item.text), [
+    'AMOY STREET NASI LEMAK',
+    '7 Maxwell Road, Singapore 069111',
+    'crispy chicken wing, sambal and otah',
+  ]);
+  assert.deepEqual(suggestions.map((item) => item.field), ['name', 'address', 'reason']);
 });
 
 test('buildPlaceRecord creates a map-ready place object with simplified fields', () => {

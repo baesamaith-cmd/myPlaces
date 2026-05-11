@@ -76,6 +76,8 @@ test('index exposes quick OCR insert actions for name address and reason fields'
   assert.match(html, /id="fillReasonFromOcrButton"[^>]*data-i18n-key="fillReasonFromOcrButton"/, 'reason quick-insert action should exist');
   assert.match(html, /id="appendSourceTextToggle"/, 'append mode toggle should exist for OCR helper actions');
   assert.match(html, /data-i18n-key="appendSourceTextToggleLabel"/, 'append mode toggle label should be localizable');
+  assert.match(html, /id="ocrLineSuggestionList"/, 'OCR line suggestion chip list should exist');
+  assert.match(html, /data-i18n-key="ocrLineSuggestionsTitle"/, 'OCR line suggestion title should be localizable');
   assert.match(html, /class="[^"]*source-preview-actions[^"]*"/, 'quick-insert actions should live with the OCR source preview controls');
 });
 
@@ -114,6 +116,15 @@ test('app preprocesses screenshots before OCR to improve recognition quality', (
   assert.match(appJs, /canvas\.getContext\('2d'/, 'OCR preprocessing should use a canvas context');
   assert.match(appJs, /ctx\.filter = 'grayscale\(1\) contrast\(1\.35\) brightness\(1\.08\)'/, 'OCR preprocessing should increase grayscale contrast and brightness');
   assert.match(appJs, /window\.Tesseract\.recognize\(preparedImage, 'eng'/, 'OCR should run against the preprocessed image when possible');
+});
+
+test('app renders OCR line chips and field suggestions for one-tap mobile insertion', () => {
+  assert.match(appJs, /buildOcrLineSuggestions/, 'app should use OCR line suggestions from parser output');
+  assert.match(appJs, /const ocrLineSuggestionList = document.getElementById\('ocrLineSuggestionList'\);/, 'app should reference the OCR line suggestion container');
+  assert.match(appJs, /function renderOcrLineSuggestions\(/, 'app should render tappable OCR line chips');
+  assert.match(appJs, /data-field=\"\$\{escapeHtml\(suggestion\.field\)\}\"/, 'rendered chips should expose their suggested field');
+  assert.match(appJs, /applySuggestedOcrLine\(/, 'app should support one-tap insertion from suggested chips');
+  assert.match(appJs, /renderOcrLineSuggestions\(rawText, parsed\)/, 'OCR completion should refresh suggestion chips');
 });
 
 test('app numbers the guided mobile flow buttons so users can follow the order clearly', () => {
