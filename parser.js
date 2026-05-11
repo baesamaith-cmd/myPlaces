@@ -27,7 +27,11 @@ function extractPrice(text) {
 
 function extractAddress(lines) {
   return (
-    lines.find((line) => /Singapore\s*\d{6}/i.test(line) || /\b(?:Rd|Road|St|Street|Ave|Avenue|Dr|Drive|Lane|Lor|Jln)\b/i.test(line)) ||
+    lines.find(
+      (line) =>
+        /Singapore\s*\d{6}/i.test(line) ||
+        (/\b(?:Rd|Road|St|Street|Ave|Avenue|Dr|Drive|Lane|Lor|Jln)\b/i.test(line) && /\d/.test(line))
+    ) ||
     ''
   );
 }
@@ -61,18 +65,44 @@ function extractDescription(lines) {
   return line.replace(/\s+at\s+\$\d+(?:\.\d{1,2})?/i, '').trim();
 }
 
+function scoreNameCandidate(line, index, addressIndex) {
+  let score = 0;
+  const wordCount = line.split(/\s+/).filter(Boolean).length;
+  const upperOnly = line.replace(/[^A-Z]/g, '').length;
+  const lettersOnly = line.replace(/[^A-Za-z]/g, '').length;
+
+  if (!/\d/.test(line)) score += 4;
+  if (wordCount >= 1 && wordCount <= 4) score += 3;
+  if (wordCount >= 5 && wordCount <= 6) score += 1;
+  if (lettersOnly > 0 && upperOnly / lettersOnly >= 0.75) score += 3;
+  if (addressIndex > 0 && index === addressIndex - 1) score += 4;
+  if (/&|'/i.test(line)) score += 1;
+
+  if (/best|authentic|famous|must-try|featured|open|daily|nearby|station|recommended|signature|special|why/i.test(line)) score -= 5;
+  if (/[,.:]/.test(line)) score -= 2;
+  if (wordCount >= 7) score -= 3;
+  if (line.length > 40) score -= 2;
+
+  return score;
+}
+
 function extractName(lines, address, hours, landmarkLine) {
   const blocked = new Set([address, hours, landmarkLine].filter(Boolean));
-  const candidates = lines.filter((line) => {
-    if (!line || blocked.has(line)) return false;
-    if (/^foodstamp/i.test(line)) return false;
-    if (/Singapore/i.test(line) && line.split(' ').length <= 3) return false;
-    if (/\$\d/.test(line)) return false;
-    if (/Nearby\b/i.test(line)) return false;
-    return /[A-Za-z가-힣]{2,}/.test(line) && line.length <= 50;
-  });
+  const addressIndex = address ? lines.indexOf(address) : -1;
+  const candidates = lines
+    .map((line, index) => ({ line, index }))
+    .filter(({ line }) => {
+      if (!line || blocked.has(line)) return false;
+      if (/^foodstamp/i.test(line)) return false;
+      if (/Singapore/i.test(line) && line.split(' ').length <= 3) return false;
+      if (/\$\d/.test(line)) return false;
+      if (/Nearby\b/i.test(line)) return false;
+      return /[A-Za-z가-힣]{2,}/.test(line) && line.length <= 50;
+    })
+    .map(({ line, index }) => ({ line, index, score: scoreNameCandidate(line, index, addressIndex) }))
+    .sort((a, b) => b.score - a.score || b.index - a.index);
 
-  return candidates.length ? candidates[candidates.length - 1] : '';
+  return candidates.length ? candidates[0].line : '';
 }
 
 function inferArea(text) {

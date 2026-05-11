@@ -32,6 +32,27 @@ test('parseRestaurantFields extracts simplified restaurant fields from screensho
   assert.match(parsed.reason, /\$4.50/);
 });
 
+test('parseRestaurantFields prefers a likely single-line shop name over marketing copy', () => {
+  const parsed = parseRestaurantFields(`foodstamp.sg Singapore
+Best brunch in Bugis
+Seng House
+12 Liang Seah Street, Singapore 189033
+Open daily 8AM - 8PM`);
+
+  assert.equal(parsed.name, 'Seng House');
+  assert.equal(parsed.address, '12 Liang Seah Street, Singapore 189033');
+});
+
+test('parseRestaurantFields prefers uppercase single-line venue names before longer description lines', () => {
+  const parsed = parseRestaurantFields(`featured by foodies
+AMOY STREET NASI LEMAK
+crispy chicken wing, sambal and otah
+7 Maxwell Road, Singapore 069111`);
+
+  assert.equal(parsed.name, 'AMOY STREET NASI LEMAK');
+  assert.equal(parsed.address, '7 Maxwell Road, Singapore 069111');
+});
+
 test('buildPlaceRecord creates a map-ready place object with simplified fields', () => {
   const before = Date.now();
   const record = buildPlaceRecord({
