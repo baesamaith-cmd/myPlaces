@@ -431,6 +431,21 @@ summary:focus-visible {
   width: 100%;
 }
 
+.flow-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.flow-action-button::after {
+  content: '→';
+  font-size: 16px;
+  opacity: 0.92;
+}
+
 .upload-stage-header {
   margin-bottom: 16px;
 }
@@ -439,6 +454,13 @@ summary:focus-visible {
   margin-top: 18px;
   padding-top: 18px;
   border-top: 1px solid var(--line-soft);
+}
+
+.step-action-hint {
+  margin: 14px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .form-mode-hint {

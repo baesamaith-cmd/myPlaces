@@ -24,6 +24,14 @@ test('index starts with upload-first mobile flow and reveals later steps progres
   assert.match(html, /id="saveParsedPlace"[^>]*data-i18n-key="step4Action"/, 'save action should exist in its own stage section');
 });
 
+test('primary capture actions share one consistent button style', () => {
+  assert.match(html, /for="imageUpload"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'upload action should use the shared primary flow button style');
+  assert.match(html, /id="runOcrButton"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'OCR action should use the shared primary flow button style');
+  assert.match(html, /id="previewButton"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'preview action should use the shared primary flow button style');
+  assert.match(html, /id="saveParsedPlace"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'save action should use the shared primary flow button style');
+  assert.match(html, /data-i18n-key="stepActionHint"/, 'progressive flow should include a consistent tap hint for the next action');
+});
+
 test('index exposes simplified shared Supabase controls', () => {
   assert.match(html, /Shared cloud/, 'shared cloud title should exist');
   assert.match(html, /무료 Supabase 공용 저장소/, 'shared cloud section should describe the free shared store');

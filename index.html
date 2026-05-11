@@ -38,7 +38,7 @@
           <p class="subtitle" data-i18n-key="heroSubtitle">이미지 업로드부터 차례대로 진행하는 모바일 친화 흐름</p>
 
           <div class="hero-upload-action">
-            <label for="imageUpload" class="primary-button action-button" data-i18n-key="step1Action">
+            <label for="imageUpload" class="flow-action-button primary-button action-button" data-i18n-key="step1Action">
               이미지 업로드
             </label>
           </div>
@@ -72,7 +72,8 @@
               </div>
             </div>
             <p class="helper-text" data-i18n-key="step2Body">이미지를 고른 뒤 OCR을 실행해서 텍스트를 읽어오세요.</p>
-            <button id="runOcrButton" type="button" class="primary-button full-width-button" data-i18n-key="step2Action">
+            <p class="step-action-hint" data-i18n-key="stepActionHint">아래 큰 버튼을 누르면 다음으로 진행됩니다.</p>
+            <button id="runOcrButton" type="button" class="flow-action-button primary-button full-width-button" data-i18n-key="step2Action">
               OCR 실행
             </button>
           </section>
@@ -119,7 +120,8 @@
               <pre id="sourceTextPreview" class="source-preview" data-i18n-key="sourcePreviewEmpty">아직 OCR 결과가 없습니다.</pre>
             </details>
 
-            <button id="previewButton" type="button" class="secondary-button full-width-button" data-i18n-key="step3Action">
+            <p class="step-action-hint" data-i18n-key="stepActionHint">아래 큰 버튼을 누르면 다음으로 진행됩니다.</p>
+            <button id="previewButton" type="button" class="flow-action-button primary-button full-width-button" data-i18n-key="step3Action">
               주소 확인
             </button>
 
@@ -143,7 +145,8 @@
             </div>
             <p id="editModeHint" class="helper-text form-mode-hint" data-i18n-key="editModeHintNew">새 장소 저장 모드입니다.</p>
             <div class="button-row save-actions-row">
-              <button id="saveParsedPlace" type="button" class="primary-button full-width-button" data-i18n-key="step4Action">
+              <p class="step-action-hint" data-i18n-key="stepActionHint">아래 큰 버튼을 누르면 다음으로 진행됩니다.</p>
+              <button id="saveParsedPlace" type="button" class="flow-action-button primary-button full-width-button" data-i18n-key="step4Action">
                 저장하기
               </button>
               <button id="cancelEditButton" type="button" class="secondary-button" hidden data-i18n-key="cancelEditButton">
