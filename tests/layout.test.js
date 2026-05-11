@@ -24,11 +24,17 @@ test('index starts with upload-first mobile flow and reveals later steps progres
   assert.match(html, /id="saveParsedPlace"[^>]*data-i18n-key="step4Action"/, 'save action should exist in its own stage section');
 });
 
-test('primary capture actions share one consistent button style', () => {
-  assert.match(html, /for="imageUpload"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'upload action should use the shared primary flow button style');
-  assert.match(html, /id="runOcrButton"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'OCR action should use the shared primary flow button style');
-  assert.match(html, /id="previewButton"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'preview action should use the shared primary flow button style');
-  assert.match(html, /id="saveParsedPlace"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'save action should use the shared primary flow button style');
+test('all non-directions actions share one unified button color treatment', () => {
+  assert.match(html, /for="imageUpload"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'upload action should use the shared primary button style');
+  assert.match(html, /id="runOcrButton"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'OCR action should use the shared primary button style');
+  assert.match(html, /id="copySourceTextButton"[^>]*class="[^"]*primary-button[^"]*"/, 'copy OCR action should use the shared primary button style');
+  assert.match(html, /id="previewButton"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'preview action should use the shared primary button style');
+  assert.match(html, /id="saveParsedPlace"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'save action should use the shared primary button style');
+  assert.match(html, /id="cancelEditButton"[^>]*class="[^"]*primary-button[^"]*"/, 'cancel edit action should use the shared primary button style');
+  assert.match(html, /id="syncNowButton"[^>]*class="[^"]*primary-button[^"]*"/, 'shared sync action should use the shared primary button style');
+  assert.match(appJs, /class=\"place-edit-button primary-button\"/, 'saved-place edit action should use the shared primary button style');
+  assert.match(appJs, /class=\"place-action-link primary-button\"/, 'saved-place view action should use the shared primary button style');
+  assert.match(appJs, /class=\"place-action-link secondary-button directions-action\"/, 'directions action should remain the only secondary-colored action');
   assert.match(html, /data-i18n-key="stepActionHint"/, 'progressive flow should include a consistent tap hint for the next action');
 });
 

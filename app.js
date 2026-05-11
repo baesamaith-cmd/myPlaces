@@ -500,13 +500,13 @@ function renderPlaces() {
           <p class="place-card-address">${escapeHtml(place.address || t('placeAddressMissing'))}</p>
         </div>
         <div class="place-card-head-actions">
-          <button type="button" class="place-edit-button">${escapeHtml(t('placeActionEdit'))}</button>
+          <button type="button" class="place-edit-button primary-button">${escapeHtml(t('placeActionEdit'))}</button>
         </div>
       </div>
       <p>${escapeHtml(place.reason || t('placeReasonMissing'))}</p>
       <div class="place-actions">
         <a
-          class="place-action-link"
+          class="place-action-link primary-button"
           href="${escapeHtml(actionLinks.viewUrl)}"
           target="_blank"
           rel="noreferrer noopener"
@@ -518,7 +518,7 @@ function renderPlaces() {
           <span>${escapeHtml(t('placeActionView'))}</span>
         </a>
         <a
-          class="place-action-link secondary"
+          class="place-action-link secondary-button directions-action"
           href="${escapeHtml(actionLinks.directionsUrl)}"
           target="_blank"
           rel="noreferrer noopener"

@@ -367,7 +367,9 @@ summary:focus-visible {
 
 .primary-button,
 .secondary-button,
-.action-button {
+.action-button,
+.place-edit-button,
+.place-action-link {
   flex: 1;
   min-height: 46px;
   border-radius: 14px;
@@ -380,39 +382,48 @@ summary:focus-visible {
 .primary-button:hover,
 .secondary-button:hover,
 .action-button:hover,
+.place-edit-button:hover,
+.place-action-link:hover,
 .place-card:hover,
 .candidate-card:hover {
   transform: translateY(-1px);
 }
 
-.primary-button {
+.primary-button,
+.place-edit-button.primary-button,
+.place-action-link.primary-button {
   border: 1px solid transparent;
   background: linear-gradient(180deg, var(--accent-bright), var(--accent));
   color: #fff;
   box-shadow: 0 12px 30px rgba(94, 106, 210, 0.28);
 }
 
-.primary-button:hover {
+.primary-button:hover,
+.place-edit-button.primary-button:hover,
+.place-action-link.primary-button:hover {
   background: linear-gradient(180deg, var(--accent-hover), var(--accent-bright));
 }
 
-.secondary-button {
+.secondary-button,
+.place-action-link.secondary-button {
   border: 1px solid var(--line-soft);
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-secondary);
+  box-shadow: none;
 }
 
-.action-button {
+.action-button,
+.place-action-link,
+.place-edit-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--line-soft);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-secondary);
   text-align: center;
+  text-decoration: none;
 }
 
 .secondary-button:hover,
+.place-action-link.secondary-button:hover,
 .action-button:hover {
   border-color: var(--line);
   background: rgba(255, 255, 255, 0.05);
@@ -427,7 +438,7 @@ summary:focus-visible {
   margin-top: 20px;
 }
 
-.hero-upload-action .action-button {
+.hero-upload-action .flow-action-button {
   width: 100%;
 }
 
@@ -706,15 +717,11 @@ summary:focus-visible {
 .place-edit-button {
   position: relative;
   z-index: 2;
-  border: 1px solid var(--line-soft);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-secondary);
   border-radius: 999px;
   min-height: 34px;
   padding: 0 12px;
   font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
 }
 
 .place-meta-row {
@@ -750,26 +757,12 @@ summary:focus-visible {
 .place-action-link {
   position: relative;
   z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   gap: 8px;
-  min-height: 42px;
   padding: 10px 14px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, var(--accent-bright), var(--accent));
-  color: #fff;
-  text-decoration: none;
   font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 10px 24px rgba(94, 106, 210, 0.22);
-  transition: transform 0.16s ease, opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
 }
 
-.place-action-link.secondary {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-secondary);
-  border: 1px solid var(--line-soft);
+.directions-action {
   box-shadow: none;
 }
 
