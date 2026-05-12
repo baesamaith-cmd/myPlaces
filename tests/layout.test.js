@@ -27,7 +27,6 @@ test('index starts with upload-first mobile flow and reveals later steps progres
 test('all non-directions actions share one unified button color treatment', () => {
   assert.match(html, /for="imageUpload"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'upload action should use the shared primary button style');
   assert.match(html, /id="runOcrButton"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'OCR action should use the shared primary button style');
-  assert.match(html, /id="copySourceTextButton"[^>]*class="[^"]*primary-button[^"]*"/, 'copy OCR action should use the shared primary button style');
   assert.match(html, /id="previewButton"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'preview action should use the shared primary button style');
   assert.match(html, /id="saveParsedPlace"[^>]*class="[^"]*flow-action-button[^"]*primary-button[^"]*"/, 'save action should use the shared primary button style');
   assert.match(html, /id="cancelEditButton"[^>]*class="[^"]*primary-button[^"]*"/, 'cancel edit action should use the shared primary button style');
@@ -63,22 +62,14 @@ test('index keeps only name address and reason input fields', () => {
   assert.doesNotMatch(html, /id="parsedCategory"/, 'category field should be removed');
 });
 
-test('index exposes full OCR text in a copy-friendly field', () => {
-  assert.match(html, /id="sourceTextPreview"/, 'full OCR text field should exist');
-  assert.match(html, /id="sourceTextPreview"[^>]*readonly/, 'full OCR text field should be read-only for easy copying');
-  assert.match(html, /id="sourceTextPreview"[^>]*data-i18n-placeholder="sourcePreviewEmpty"/, 'full OCR text field should have a localizable empty placeholder');
-  assert.match(html, /id="copySourceTextButton"/, 'copy OCR text button should exist');
-});
-
-test('index exposes quick OCR insert actions for name address and reason fields', () => {
-  assert.match(html, /id="fillNameFromOcrButton"[^>]*data-i18n-key="fillNameFromOcrButton"/, 'name quick-insert action should exist');
-  assert.match(html, /id="fillAddressFromOcrButton"[^>]*data-i18n-key="fillAddressFromOcrButton"/, 'address quick-insert action should exist');
-  assert.match(html, /id="fillReasonFromOcrButton"[^>]*data-i18n-key="fillReasonFromOcrButton"/, 'reason quick-insert action should exist');
-  assert.match(html, /id="appendSourceTextToggle"/, 'append mode toggle should exist for OCR helper actions');
-  assert.match(html, /data-i18n-key="appendSourceTextToggleLabel"/, 'append mode toggle label should be localizable');
-  assert.match(html, /id="ocrLineSuggestionList"/, 'OCR line suggestion chip list should exist');
-  assert.match(html, /data-i18n-key="ocrLineSuggestionsTitle"/, 'OCR line suggestion title should be localizable');
-  assert.match(html, /class="[^"]*source-preview-actions[^"]*"/, 'quick-insert actions should live with the OCR source preview controls');
+test('index no longer exposes raw OCR text controls and instead keeps only the normal review fields', () => {
+  assert.doesNotMatch(html, /id="sourceTextPreview"/, 'raw OCR text field should be removed');
+  assert.doesNotMatch(html, /id="copySourceTextButton"/, 'copy OCR text button should be removed');
+  assert.doesNotMatch(html, /id="fillNameFromOcrButton"/, 'OCR-to-name helper should be removed');
+  assert.doesNotMatch(html, /id="fillAddressFromOcrButton"/, 'OCR-to-address helper should be removed');
+  assert.doesNotMatch(html, /id="fillReasonFromOcrButton"/, 'OCR-to-reason helper should be removed');
+  assert.doesNotMatch(html, /id="appendSourceTextToggle"/, 'append OCR helper toggle should be removed');
+  assert.doesNotMatch(html, /id="ocrLineSuggestionList"/, 'OCR line suggestion chips should be removed with the raw OCR view');
 });
 
 test('app localizes UI from browser language instead of rendering both languages together', () => {
@@ -90,25 +81,15 @@ test('app localizes UI from browser language instead of rendering both languages
   assert.match(appJs, /data-i18n-placeholder/, 'app should localize placeholders too');
 });
 
-test('app keeps full OCR text selectable and supports copying it', () => {
-  assert.match(appJs, /const sourceTextPreview = document.getElementById\('sourceTextPreview'\);/, 'app should reference the OCR full text field');
-  assert.match(appJs, /const copySourceTextButton = document.getElementById\('copySourceTextButton'\);/, 'app should reference the OCR copy button');
-  assert.match(appJs, /sourceTextPreview\.value =/, 'app should write OCR text into the copy-friendly field');
-  assert.match(appJs, /navigator\.clipboard\.writeText\(/, 'app should copy OCR text to clipboard when requested');
-});
-
-test('app can insert selected OCR text into name address and reason fields', () => {
-  assert.match(appJs, /const fillNameFromOcrButton = document.getElementById\('fillNameFromOcrButton'\);/, 'app should reference the OCR-to-name quick action');
-  assert.match(appJs, /const fillAddressFromOcrButton = document.getElementById\('fillAddressFromOcrButton'\);/, 'app should reference the OCR-to-address quick action');
-  assert.match(appJs, /const fillReasonFromOcrButton = document.getElementById\('fillReasonFromOcrButton'\);/, 'app should reference the OCR-to-reason quick action');
-  assert.match(appJs, /const appendSourceTextToggle = document.getElementById\('appendSourceTextToggle'\);/, 'app should reference the append-mode toggle');
-  assert.match(appJs, /function getSelectedSourceText\(/, 'app should derive a selected OCR snippet before filling fields');
-  assert.match(appJs, /function buildFieldInsertValue\(/, 'app should support append-aware insertion values');
-  assert.match(appJs, /appendSourceTextToggle\.checked/, 'quick OCR insert should respect append mode');
-  assert.match(appJs, /field\.value = buildFieldInsertValue\(/, 'quick OCR insert should use append-aware field updates');
-  assert.match(appJs, /fillNameFromOcrButton\.addEventListener\('click'/, 'name quick action should be wired');
-  assert.match(appJs, /fillAddressFromOcrButton\.addEventListener\('click'/, 'address quick action should be wired');
-  assert.match(appJs, /fillReasonFromOcrButton\.addEventListener\('click'/, 'reason quick action should be wired');
+test('OCR completion now auto-fills the save reason with the OCR text instead of exposing raw-text helpers', () => {
+  assert.doesNotMatch(appJs, /const sourceTextPreview = document.getElementById\('sourceTextPreview'\);/, 'app should stop referencing a raw OCR text field');
+  assert.doesNotMatch(appJs, /const copySourceTextButton = document.getElementById\('copySourceTextButton'\);/, 'app should stop referencing the copy OCR helper');
+  assert.doesNotMatch(appJs, /const fillNameFromOcrButton = document.getElementById\('fillNameFromOcrButton'\);/, 'app should stop referencing OCR helper buttons');
+  assert.doesNotMatch(appJs, /const fillAddressFromOcrButton = document.getElementById\('fillAddressFromOcrButton'\);/, 'app should stop referencing OCR helper buttons');
+  assert.doesNotMatch(appJs, /const fillReasonFromOcrButton = document.getElementById\('fillReasonFromOcrButton'\);/, 'app should stop referencing OCR helper buttons');
+  assert.doesNotMatch(appJs, /function getSelectedSourceText\(/, 'app should remove selected-snippet helper logic');
+  assert.doesNotMatch(appJs, /function buildFieldInsertValue\(/, 'app should remove append-helper insertion logic');
+  assert.match(appJs, /fieldRefs\.reason\.value = latestSourceText \|\| parsed\.reason \|\| '';/, 'OCR completion should fill the save reason with the raw OCR text first');
 });
 
 test('app preprocesses screenshots before OCR to improve recognition quality', () => {
@@ -118,31 +99,21 @@ test('app preprocesses screenshots before OCR to improve recognition quality', (
   assert.match(appJs, /window\.Tesseract\.recognize\(preparedImage, 'eng'/, 'OCR should run against the preprocessed image when possible');
 });
 
-test('app renders OCR line chips and field suggestions for one-tap mobile insertion', () => {
-  assert.match(appJs, /buildOcrLineSuggestions/, 'app should use OCR line suggestions from parser output');
-  assert.match(appJs, /const ocrLineSuggestionList = document.getElementById\('ocrLineSuggestionList'\);/, 'app should reference the OCR line suggestion container');
-  assert.match(appJs, /function renderOcrLineSuggestions\(/, 'app should render tappable OCR line chips');
-  assert.match(appJs, /data-field=\"\$\{escapeHtml\(suggestion\.field\)\}\"/, 'rendered chips should expose their suggested field');
-  assert.match(appJs, /applySuggestedOcrLine\(/, 'app should support one-tap insertion from suggested chips');
-  assert.match(appJs, /renderOcrLineSuggestions\(rawText, parsed\)/, 'OCR completion should refresh suggestion chips');
+test('app no longer renders OCR line chips when raw OCR helpers are removed', () => {
+  assert.doesNotMatch(appJs, /buildOcrLineSuggestions/, 'app should stop using OCR line suggestion helper output in the UI');
+  assert.doesNotMatch(appJs, /const ocrLineSuggestionList = document.getElementById\('ocrLineSuggestionList'\);/, 'app should stop referencing the OCR line suggestion container');
+  assert.doesNotMatch(appJs, /function renderOcrLineSuggestions\(/, 'app should remove tappable OCR line chips');
+  assert.doesNotMatch(appJs, /applySuggestedOcrLine\(/, 'app should remove one-tap OCR chip insertion');
 });
 
 test('app numbers the guided mobile flow buttons so users can follow the order clearly', () => {
   assert.match(appJs, /step1Action: '1\. 이미지 업로드'/, 'Korean upload action should include step number 1');
   assert.match(appJs, /step2Action: '2\. OCR 실행'/, 'Korean OCR action should include step number 2');
-  assert.match(appJs, /copySourceTextButton: '3-1\. OCR 전체 복사'/, 'Korean OCR copy action should include a sub-step number');
-  assert.match(appJs, /fillNameFromOcrButton: '3-2\. 선택 텍스트 → 가게 이름'/, 'Korean OCR-to-name action should include a sub-step number');
-  assert.match(appJs, /fillAddressFromOcrButton: '3-3\. 선택 텍스트 → 주소'/, 'Korean OCR-to-address action should include a sub-step number');
-  assert.match(appJs, /fillReasonFromOcrButton: '3-4\. 선택 텍스트 → 저장 이유'/, 'Korean OCR-to-reason action should include a sub-step number');
   assert.match(appJs, /step3Action: '3\. 주소 확인'/, 'Korean address confirmation action should include step number 3');
   assert.match(appJs, /step4Action: '4\. 저장하기'/, 'Korean save action should include step number 4');
   assert.match(appJs, /cancelEditButton: '4-1\. 수정 취소'/, 'Korean cancel edit action should include a sub-step number');
   assert.match(appJs, /step1Action: '1\. Image Upload'/, 'English upload action should include step number 1');
   assert.match(appJs, /step2Action: '2\. Run OCR'/, 'English OCR action should include step number 2');
-  assert.match(appJs, /copySourceTextButton: '3-1\. Copy full OCR text'/, 'English OCR copy action should include a sub-step number');
-  assert.match(appJs, /fillNameFromOcrButton: '3-2\. Selected text → Place name'/, 'English OCR-to-name action should include a sub-step number');
-  assert.match(appJs, /fillAddressFromOcrButton: '3-3\. Selected text → Address'/, 'English OCR-to-address action should include a sub-step number');
-  assert.match(appJs, /fillReasonFromOcrButton: '3-4\. Selected text → Why save it'/, 'English OCR-to-reason action should include a sub-step number');
   assert.match(appJs, /step3Action: '3\. Confirm Address'/, 'English address confirmation action should include step number 3');
   assert.match(appJs, /step4Action: '4\. Save Place'/, 'English save action should include step number 4');
   assert.match(appJs, /cancelEditButton: '4-1\. Cancel Edit'/, 'English cancel edit action should include a sub-step number');
