@@ -151,7 +151,8 @@ test('app numbers the guided mobile flow buttons so users can follow the order c
   assert.match(appJs, /cancelEditButton: '4-1\. 수정 취소'/, 'Korean cancel edit action should include a sub-step number');
   assert.match(appJs, /step1Action: '1\. Image Upload'/, 'English upload action should include step number 1');
   assert.match(appJs, /step2Action: '2\. Run OCR'/, 'English OCR action should include step number 2');
-  assert.match(appJs, /step3Action: '3\. Confirm Address'/, 'English address confirmation action should include step number 3');
+  assert.match(appJs, /step3Action: '3\. Check Address'/, 'English address check action should include step number 3');
+  assert.match(appJs, /mapBadgeAddress: 'Address Check'/, 'English map badge should use the shorter address check label');
   assert.match(appJs, /step4Action: '4\. Save Place'/, 'English save action should include step number 4');
   assert.match(appJs, /cancelEditButton: '4-1\. Cancel Edit'/, 'English cancel edit action should include a sub-step number');
 });
