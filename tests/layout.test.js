@@ -17,11 +17,19 @@ test('index starts with upload-first mobile flow and reveals later steps progres
   assert.doesNotMatch(heroSection[1], /id="saveParsedPlace"/, 'save button should not stay crowded in the top hero section');
   assert.doesNotMatch(heroSection[1], /\|/, 'hero flow should not render bilingual copy side by side');
 
-  assert.match(html, /data-i18n-key="captureKicker">캡처 저장</, 'capture-save section label should remain visible');
-  assert.match(html, /data-i18n-key="uploadPanelTitle">위에서 아래로 4단계만 따라가세요</, 'top-to-bottom 4-step guidance should remain visible');
-  assert.match(html, /data-i18n-key="mvpBadge">MVP</, 'MVP badge should remain visible');
-  assert.match(html, /data-i18n-key="browseKicker">둘러보기</, 'browse section kicker should remain visible');
-  assert.match(html, /data-i18n-key="filterPanelTitle">저장된 장소 필터</, 'saved-place filter title should remain visible');
+  assert.doesNotMatch(html, /data-i18n-key="captureKicker">캡처 저장</, 'capture-save section label should be removed from the screen');
+  assert.doesNotMatch(html, /data-i18n-key="uploadPanelTitle">위에서 아래로 4단계만 따라가세요</, 'top-to-bottom 4-step guidance label should be removed from the screen');
+  assert.doesNotMatch(html, /data-i18n-key="mvpBadge">MVP</, 'MVP badge should be removed from the screen');
+  assert.doesNotMatch(html, /data-i18n-key="browseKicker">둘러보기</, 'browse section kicker should be removed from the screen');
+  assert.doesNotMatch(html, /data-i18n-key="filterPanelTitle">저장된 장소 필터</, 'saved-place filter title should be removed from the screen');
+  assert.doesNotMatch(html, /data-i18n-key="categoryFilterLabel">카테고리</, 'category label should be removed from the screen');
+  assert.doesNotMatch(appJs, /\bcaptureKicker:\s*['"]/,'removed capture-save translation key should be deleted from app.js');
+  assert.doesNotMatch(appJs, /\buploadPanelTitle:\s*['"]/,'removed upload-panel title key should be deleted from app.js');
+  assert.doesNotMatch(appJs, /\bmvpBadge:\s*['"]/,'removed MVP badge key should be deleted from app.js');
+  assert.doesNotMatch(appJs, /\bbrowseKicker:\s*['"]/,'removed browse kicker key should be deleted from app.js');
+  assert.doesNotMatch(appJs, /\bfilterPanelTitle:\s*['"]/,'removed filter panel title key should be deleted from app.js');
+  assert.doesNotMatch(appJs, /\bcategoryFilterLabel:\s*['"]/,'removed category filter label key should be deleted from app.js');
+  assert.match(html, /id="categoryFilter"[^>]*aria-label="Saved place category filter"/, 'category select should stay accessible after removing the visible label');
 
   assert.match(html, /id="ocrStepSection"[^>]*hidden/, 'OCR step should be hidden initially');
   assert.match(html, /id="reviewStepSection"[^>]*hidden/, 'review step should be hidden initially');

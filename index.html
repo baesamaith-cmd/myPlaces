@@ -57,14 +57,6 @@
         </section>
 
         <section class="panel upload-panel">
-          <div class="section-title-row upload-stage-header">
-            <div>
-              <p class="section-kicker" data-i18n-key="captureKicker">캡처 저장</p>
-              <h2 data-i18n-key="uploadPanelTitle">위에서 아래로 4단계만 따라가세요</h2>
-            </div>
-            <span class="helper badge-soft" data-i18n-key="mvpBadge">MVP</span>
-          </div>
-
           <input id="imageUpload" type="file" accept="image/*" hidden />
 
           <section id="ocrStepSection" class="step-panel" hidden>
@@ -155,14 +147,7 @@
         </section>
 
         <section class="controls panel filter-panel">
-          <div class="section-title-row compact-row">
-            <div>
-              <p class="section-kicker" data-i18n-key="browseKicker">둘러보기</p>
-              <h2 data-i18n-key="filterPanelTitle">저장된 장소 필터</h2>
-            </div>
-          </div>
-          <label for="categoryFilter" data-i18n-key="categoryFilterLabel">카테고리</label>
-          <select id="categoryFilter">
+          <select id="categoryFilter" aria-label="Saved place category filter">
             <option value="all">전체</option>
           </select>
 
