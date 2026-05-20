@@ -25,6 +25,7 @@ test('normalizePlaceTimestamps backfills createdAt and updatedAt for legacy reco
 test('buildSupabaseRows maps saved places into shared upsert rows', () => {
   const rows = buildSupabaseRows([
     {
+      cloudPending: true,
       id: 'place-1',
       name: 'JJ Sarawak Noodle',
       lat: 1.3381,
@@ -71,6 +72,7 @@ test('hydratePlacesFromRows restores payloads sorted by newest update first', ()
 
   assert.deepEqual(places, [
     {
+      cloudPending: false,
       id: 'newer-1',
       name: 'Newer',
       lat: 1.31,
@@ -80,6 +82,7 @@ test('hydratePlacesFromRows restores payloads sorted by newest update first', ()
       updatedAt: 1700000009000,
     },
     {
+      cloudPending: false,
       id: 'older-1',
       name: 'Older',
       lat: 1.3,
@@ -137,6 +140,7 @@ test('mergePlacesByUpdatedAt keeps the freshest record per id and retains unique
 
   assert.deepEqual(merged, [
     {
+      cloudPending: false,
       id: 'shared-1',
       name: 'Remote Fresh',
       lat: 1.32,
@@ -146,6 +150,7 @@ test('mergePlacesByUpdatedAt keeps the freshest record per id and retains unique
       updatedAt: 1700000009000,
     },
     {
+      cloudPending: false,
       id: 'remote-only-1',
       name: 'Remote Only',
       lat: 1.33,
@@ -155,6 +160,7 @@ test('mergePlacesByUpdatedAt keeps the freshest record per id and retains unique
       updatedAt: 1700000003000,
     },
     {
+      cloudPending: false,
       id: 'local-only-1',
       name: 'Local Only',
       lat: 1.31,

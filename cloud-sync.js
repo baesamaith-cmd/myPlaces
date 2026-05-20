@@ -10,6 +10,7 @@ export function normalizePlaceTimestamps(place = {}, now = Date.now()) {
   return {
     ...place,
     createdAt,
+    cloudPending: place.cloudPending === true,
     updatedAt,
   };
 }
@@ -17,12 +18,13 @@ export function normalizePlaceTimestamps(place = {}, now = Date.now()) {
 export function buildSupabaseRows(places = []) {
   return places.map((place) => {
     const normalized = normalizePlaceTimestamps(place);
+    const { cloudPending: _cloudPending, ...payload } = normalized;
 
     return {
       id: normalized.id,
       created_at: normalized.createdAt,
       updated_at: normalized.updatedAt,
-      payload: normalized,
+      payload,
     };
   });
 }
@@ -36,6 +38,7 @@ export function hydratePlacesFromRows(rows = []) {
       return normalizePlaceTimestamps(
         {
           ...payload,
+          cloudPending: false,
           id: payload.id || row.id,
           createdAt: payload.createdAt ?? row.created_at,
           updatedAt: payload.updatedAt ?? row.updated_at,

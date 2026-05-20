@@ -2,7 +2,6 @@ import { buildPlaceRecord, parseRestaurantFields } from './parser.js';
 import {
   buildSupabaseRows,
   hydratePlacesFromRows,
-  mergePlacesByUpdatedAt,
   normalizePlaceTimestamps,
 } from './cloud-sync.js';
 import { buildPlaceActionLinks } from './map-links.js';
@@ -672,11 +671,17 @@ async function syncPlacesWithCloud(options = {}) {
   }
 
   try {
-    const remotePlaces = await fetchRemotePlaces();
-    userPlaces = mergePlacesByUpdatedAt(userPlaces, remotePlaces);
+    const pendingLocalPlaces = userPlaces.filter((place) => place?.cloudPending === true);
+    let remotePlaces = await fetchRemotePlaces();
+
+    if (pendingLocalPlaces.length) {
+      await pushPlacesToCloud(pendingLocalPlaces);
+      remotePlaces = await fetchRemotePlaces();
+    }
+
+    userPlaces = remotePlaces;
     persistSavedPlaces();
     updateAllPlaces();
-    await pushPlacesToCloud(userPlaces);
     setSyncStatus(t('syncStatusSuccess', { count: userPlaces.length }), 'success');
   } catch (error) {
     console.error(error);
@@ -1050,6 +1055,7 @@ function handleSave() {
   const saveTimestamp = Date.now();
   const placeRecord = buildPlaceRecord({
     ...draft,
+    cloudPending: true,
     id: editingPlaceId || draft.id,
     lat: selectedGeocodeCandidate.lat,
     lng: selectedGeocodeCandidate.lng,
