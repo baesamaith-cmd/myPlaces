@@ -2,6 +2,7 @@ import { buildPlaceRecord, parseRestaurantFields } from './parser.js';
 import {
   buildSupabaseRows,
   hydratePlacesFromRows,
+  isBlockedPlaceId,
   normalizePlaceTimestamps,
 } from './cloud-sync.js';
 import { buildPlaceActionLinks } from './map-links.js';
@@ -610,7 +611,11 @@ function loadSavedPlaces() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.map((place) => normalizePlaceTimestamps(place)) : [];
+    return Array.isArray(parsed)
+      ? parsed
+          .map((place) => normalizePlaceTimestamps(place))
+          .filter((place) => !isBlockedPlaceId(place.id))
+      : [];
   } catch (error) {
     console.error(error);
     return [];

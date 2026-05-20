@@ -3,6 +3,16 @@ function toNumberOrNull(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+const BLOCKED_PLACE_IDS = new Set([
+  'combo-105-is-a-halal-certified-eatery-1778317305824',
+  '2-richardlau-co-olla-s42-ft-1777994764037',
+  '4nzhe-he-bt-1777993010178',
+]);
+
+export function isBlockedPlaceId(id) {
+  return typeof id === 'string' && BLOCKED_PLACE_IDS.has(id);
+}
+
 export function normalizePlaceTimestamps(place = {}, now = Date.now()) {
   const createdAt = toNumberOrNull(place.createdAt) ?? toNumberOrNull(place.updatedAt) ?? now;
   const updatedAt = toNumberOrNull(place.updatedAt) ?? createdAt;
@@ -16,7 +26,7 @@ export function normalizePlaceTimestamps(place = {}, now = Date.now()) {
 }
 
 export function buildSupabaseRows(places = []) {
-  return places.map((place) => {
+  return places.filter((place) => !isBlockedPlaceId(place?.id)).map((place) => {
     const normalized = normalizePlaceTimestamps(place);
     const { cloudPending: _cloudPending, ...payload } = normalized;
 
@@ -31,6 +41,7 @@ export function buildSupabaseRows(places = []) {
 
 export function hydratePlacesFromRows(rows = []) {
   return rows
+    .filter((row) => !isBlockedPlaceId(row?.id || row?.payload?.id))
     .map((row) => {
       const payload = row?.payload;
       if (!payload || typeof payload !== 'object') return null;

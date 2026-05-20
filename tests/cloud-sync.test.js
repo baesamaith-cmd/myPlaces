@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildSupabaseRows,
   hydratePlacesFromRows,
+  isBlockedPlaceId,
   mergePlacesByUpdatedAt,
   normalizePlaceTimestamps,
 } from '../cloud-sync.js';
@@ -20,6 +21,13 @@ test('normalizePlaceTimestamps backfills createdAt and updatedAt for legacy reco
   assert.equal(normalized.id, 'legacy-1');
   assert.ok(normalized.createdAt >= before && normalized.createdAt <= after);
   assert.equal(normalized.updatedAt, normalized.createdAt);
+});
+
+test('isBlockedPlaceId recognizes the three quarantined OCR junk records', () => {
+  assert.equal(isBlockedPlaceId('combo-105-is-a-halal-certified-eatery-1778317305824'), true);
+  assert.equal(isBlockedPlaceId('2-richardlau-co-olla-s42-ft-1777994764037'), true);
+  assert.equal(isBlockedPlaceId('4nzhe-he-bt-1777993010178'), true);
+  assert.equal(isBlockedPlaceId('combo-105-1778545287766'), false);
 });
 
 test('buildSupabaseRows maps saved places into shared upsert rows', () => {
@@ -52,6 +60,31 @@ test('buildSupabaseRows maps saved places into shared upsert rows', () => {
       },
     },
   ]);
+});
+
+test('buildSupabaseRows skips quarantined OCR junk ids so they cannot be re-uploaded', () => {
+  const rows = buildSupabaseRows([
+    {
+      id: 'combo-105-is-a-halal-certified-eatery-1778317305824',
+      name: 'blocked',
+      lat: 1.3,
+      lng: 103.8,
+      reason: 'blocked',
+      createdAt: 1,
+      updatedAt: 2,
+    },
+    {
+      id: 'safe-1',
+      name: 'safe',
+      lat: 1.31,
+      lng: 103.81,
+      reason: 'safe',
+      createdAt: 3,
+      updatedAt: 4,
+    },
+  ]);
+
+  assert.deepEqual(rows.map((row) => row.id), ['safe-1']);
 });
 
 test('hydratePlacesFromRows restores payloads sorted by newest update first', () => {
@@ -92,6 +125,25 @@ test('hydratePlacesFromRows restores payloads sorted by newest update first', ()
       updatedAt: 1700000001000,
     },
   ]);
+});
+
+test('hydratePlacesFromRows filters quarantined OCR junk ids from remote rows', () => {
+  const places = hydratePlacesFromRows([
+    {
+      id: 'combo-105-is-a-halal-certified-eatery-1778317305824',
+      created_at: 1,
+      updated_at: 2,
+      payload: { id: 'combo-105-is-a-halal-certified-eatery-1778317305824', name: 'blocked', lat: 1.3, lng: 103.8 },
+    },
+    {
+      id: 'safe-1',
+      created_at: 3,
+      updated_at: 4,
+      payload: { id: 'safe-1', name: 'safe', lat: 1.31, lng: 103.81 },
+    },
+  ]);
+
+  assert.deepEqual(places.map((place) => place.id), ['safe-1']);
 });
 
 test('mergePlacesByUpdatedAt keeps the freshest record per id and retains unique records', () => {
