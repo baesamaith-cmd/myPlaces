@@ -522,12 +522,6 @@ summary:focus-visible {
   border-top: 1px solid var(--line-soft);
 }
 
-.sync-tools {
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line-soft);
-}
-
 .storage-row {
   margin-bottom: 12px;
 }

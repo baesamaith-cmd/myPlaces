@@ -147,24 +147,18 @@
         </section>
 
         <section class="controls panel filter-panel">
-          <select id="categoryFilter" aria-label="Saved place category filter">
-            <option value="all">전체</option>
-          </select>
-
-          <div class="sync-tools">
-            <div class="section-title-row compact-row storage-row">
-              <div>
-                <p class="section-kicker" data-i18n-key="sharedCloudKicker">Shared cloud</p>
-                <h3 class="mini-title" data-i18n-key="sharedStorageTitle">무료 Supabase 공용 저장소</h3>
-              </div>
+          <div class="section-title-row compact-row storage-row">
+            <div>
+              <p class="section-kicker" data-i18n-key="sharedCloudKicker">Shared cloud</p>
+              <h3 class="mini-title" data-i18n-key="sharedStorageTitle">무료 Supabase 공용 저장소</h3>
             </div>
-            <button id="syncNowButton" type="button" class="primary-button full-width-button" data-i18n-key="syncNowButton">
-              공용 저장소 새로고침
-            </button>
-            <p id="syncStatus" class="status-message" aria-live="polite">
-              config.js에 Supabase 정보를 넣으면 여러 사람이 같은 맛집 목록을 함께 볼 수 있어요.
-            </p>
           </div>
+          <button id="syncNowButton" type="button" class="primary-button full-width-button" data-i18n-key="syncNowButton">
+            공용 저장소 새로고침
+          </button>
+          <p id="syncStatus" class="status-message" aria-live="polite">
+            config.js에 Supabase 정보를 넣으면 여러 사람이 같은 맛집 목록을 함께 볼 수 있어요.
+          </p>
         </section>
 
         <section class="panel list-panel">

@@ -49,7 +49,6 @@ const translations = {
     editModeHintNew: '새 장소 저장 모드입니다.',
     editModeHintEditing: '저장된 장소를 수정 중입니다. 필요하면 제목/주소를 바꾸고 다시 저장하세요.',
     cancelEditButton: '4-1. 수정 취소',
-    categoryAllOption: '전체',
     sharedCloudKicker: '공용 클라우드',
     sharedStorageTitle: '무료 Supabase 공용 저장소',
     syncNowButton: '공용 저장소 새로고침',
@@ -142,7 +141,6 @@ const translations = {
     editModeHintNew: 'Ready to save a new place.',
     editModeHintEditing: 'Editing a saved place. Update the title or address if needed, then save again.',
     cancelEditButton: '4-1. Cancel Edit',
-    categoryAllOption: 'All',
     sharedCloudKicker: 'Shared cloud',
     sharedStorageTitle: 'Free shared Supabase storage',
     syncNowButton: 'Refresh shared storage',
@@ -287,7 +285,6 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
 }).addTo(map);
 
-const categoryFilter = document.getElementById('categoryFilter');
 const placeList = document.getElementById('placeList');
 const placeCount = document.getElementById('placeCount');
 const imageUpload = document.getElementById('imageUpload');
@@ -485,11 +482,6 @@ function setActiveCard(cardElement) {
 function clearMarkers() {
   markers.forEach((marker) => marker.remove());
   markers.length = 0;
-}
-
-function renderCategories(places) {
-  categoryFilter.innerHTML = `<option value="all">${escapeHtml(t('categoryAllOption'))}</option>`;
-  categoryFilter.value = 'all';
 }
 
 function clearPreviewMarker() {
@@ -711,7 +703,6 @@ async function restoreCloudSession() {
 
 function updateAllPlaces() {
   allPlaces = [...userPlaces, ...seedPlaces];
-  renderCategories(allPlaces);
   renderPlaces();
 }
 
@@ -1133,7 +1124,6 @@ previewButton.addEventListener('click', handlePreview);
 saveParsedPlaceButton.addEventListener('click', handleSave);
 syncNowButton.addEventListener('click', handleSyncNow);
 languageToggleButton?.addEventListener('click', () => setLanguage(currentLanguage === 'ko' ? 'en' : 'ko'));
-categoryFilter.addEventListener('change', renderPlaces);
 
 applyTranslations();
 setSyncStatus(t('syncStatusConfigHint'));
