@@ -170,6 +170,14 @@ button:disabled {
   justify-content: space-between;
 }
 
+.hero-topline-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .compact-row {
   margin-bottom: 10px;
 }
@@ -199,6 +207,31 @@ button:disabled {
   color: var(--text-secondary);
   font-size: 12px;
   font-weight: 510;
+}
+
+.lang-toggle-button {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+}
+
+.lang-toggle-button:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.lang-toggle-button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 2px;
 }
 
 .hero-card h1 {
@@ -447,6 +480,7 @@ summary:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 10px;
+  min-height: 48px;
   font-size: 15px;
   letter-spacing: -0.01em;
 }
@@ -929,6 +963,22 @@ summary:focus-visible {
     font-size: 32px;
   }
 
+  .subtitle {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .hero-topline-actions {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .lang-toggle-button {
+    min-height: 44px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+
   .hero-metrics,
   .form-grid {
     grid-template-columns: 1fr;
@@ -938,6 +988,30 @@ summary:focus-visible {
   .map-header {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .flow-action-button,
+  .primary-button,
+  button,
+  select,
+  input,
+  textarea {
+    min-height: 48px;
+  }
+
+  textarea {
+    min-height: 120px;
+  }
+
+  .step-action-hint {
+    line-height: 1.45;
+  }
+
+  .leaflet-control-zoom a {
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    font-size: 20px;
   }
 
   #map {

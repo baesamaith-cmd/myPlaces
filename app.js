@@ -9,14 +9,15 @@ import { buildPlaceActionLinks } from './map-links.js';
 import { buildCandidateFromPlace, findDuplicatePlace, upsertUserPlace } from './user-place-utils.js';
 
 const STORAGE_KEY = 'myPlaces.userPlaces.v1';
+const LANGUAGE_STORAGE_KEY = 'myPlaces.uiLanguage.v1';
 const DEFAULT_CENTER = [1.3521, 103.8198];
 const DEFAULT_ZOOM = 12;
 
 const translations = {
   ko: {
     heroChip: '싱가포르 맛집 지도',
-    heroTitle: '맛집 캡처를 바로 지도에 올리기',
-    heroSubtitle: '이미지 업로드부터 차례대로 진행하는 모바일 친화 흐름',
+    heroTitle: '맛집 캡처를 지도에 바로 저장하기',
+    heroSubtitle: '스크린샷 업로드 → 글자 인식 → 주소 확인 → 저장',
     captureKicker: '캡처 저장',
     mvpBadge: 'MVP',
     stepFlowAriaLabel: '맛집 저장 4단계',
@@ -29,17 +30,14 @@ const translations = {
     step4Title: '4. 저장',
     step4Action: '4. 저장하기',
     step4ActionEdit: '수정 저장',
-    selectedFileNone: '선택된 파일이 없습니다.',
+    selectedFileNone: '먼저 스크린샷 1장을 올려주세요.',
     selectedFileChosen: '선택된 파일: {fileName}',
-    uploadPanelTitle: '한 단계씩 아래로 진행하세요',
+    uploadPanelTitle: '위에서 아래로 4단계만 따라가세요',
     step2Kicker: '2단계',
-    step2Body: '이미지를 고른 뒤 OCR을 실행해서 텍스트를 읽어오세요.',
+    step2Body: '스크린샷을 고른 뒤 OCR 실행을 눌러 글자를 읽어오세요.',
     step3Kicker: '3단계',
     step4Kicker: '4단계',
-    stepActionHint: '아래 큰 버튼을 누르면 다음으로 진행됩니다.',
-    uploadLabel: '이미지 바꾸기',
-    uploadDropzoneTitle: '다른 캡처로 다시 선택',
-    uploadDropzoneBody: '파일을 바꾸면 OCR과 주소 확인을 다시 실행할 수 있어요.',
+    stepActionHint: '큰 버튼을 하나씩 누르면 다음 단계가 열립니다.',
     parsedNameLabel: '가게 이름',
     parsedNamePlaceholder: '예: JJ Sarawak Noodle',
     parsedAddressLabel: '주소',
@@ -82,21 +80,22 @@ const translations = {
     buildDescriptionAddressPrefix: '주소: {address}',
     previewPlaceFallback: '미리보기 장소',
     candidateSearchInProgress: '주소 후보를 확인하는 중…',
-    candidateSearchSuccess: '주소 후보를 찾았습니다. 위치를 확인한 뒤 4단계 저장을 누르세요.',
+    candidateSearchSuccess: '위치 후보를 찾았어요. 맞는 곳을 탭한 뒤 4단계에서 저장하세요.',
     candidateSearchNeedInput: '먼저 OCR을 실행하거나 이름/주소를 입력해주세요.',
     candidateSearchNoResult: '후보를 찾지 못했습니다. 주소나 이름을 조금 더 구체적으로 수정해보세요.',
     candidateSearchError: '주소 확인 실패: {message}',
     candidateSearchProviderError: 'Photon 지오코딩 실패: {status}',
-    ocrMissingFile: '먼저 이미지를 선택해주세요.',
+    ocrMissingFile: '먼저 스크린샷 1장을 올려주세요.',
+    ocrStatusIdle: '스크린샷을 올린 뒤 2단계 OCR 실행을 눌러주세요.',
     ocrRunning: 'OCR 실행 중… 이미지에서 텍스트를 읽고 있어요. 첫 실행은 10~30초 정도 걸릴 수 있어요.',
-    ocrSuccess: 'OCR 완료. 추출된 필드를 확인한 뒤 3단계 주소 확인을 눌러주세요.',
+    ocrSuccess: 'OCR이 끝났어요. 내용이 맞는지 보고 3단계 주소 확인을 눌러주세요.',
     ocrError: 'OCR 실패: {message}',
     tesseractLoadError: 'Tesseract.js를 불러오지 못했습니다.',
     supabaseLoadError: 'Supabase SDK를 불러오지 못했습니다.',
     cloudFetchError: '공용 저장소를 불러오지 못했습니다: {message}',
     cloudPushError: '공용 저장소 저장에 실패했습니다: {message}',
     saveNeedsName: '저장하려면 가게 이름이 필요합니다.',
-    saveNeedsCandidate: '먼저 지도에 미리보기로 위치 후보를 선택해주세요.',
+    saveNeedsCandidate: '지도 아래 위치 후보 카드에서 맞는 장소를 먼저 탭해주세요.',
     duplicatePlace: "이미 저장된 장소예요: '{name}'. 기존 항목을 수정해주세요.",
     saveSuccessNew: "'{name}' 저장 완료. 이 기기와 공용 목록에 반영할게요.",
     saveSuccessEdit: "'{name}' 수정 완료. 공용 목록에 반영할 준비가 됐어요.",
@@ -110,12 +109,15 @@ const translations = {
     mapBadgeOcr: 'OCR 가져오기',
     mapBadgeAddress: '주소 확인',
     mapAriaLabel: '맛집 지도',
+    languageToggleToEnglish: 'English',
+    languageToggleToKorean: '한국어',
+    languageToggleAriaLabel: '한/영 전환',
   },
   en: {
     heroChip: 'Singapore Food Map',
-    heroTitle: 'Save food finds from screenshots',
-    heroSubtitle: 'A mobile-first flow that reveals each step as you go.',
-    captureKicker: 'Capture ingestion',
+    heroTitle: 'Save screenshot finds to your map',
+    heroSubtitle: 'Upload a screenshot → read the text → confirm the address → save',
+    captureKicker: 'Save capture',
     mvpBadge: 'MVP',
     stepFlowAriaLabel: '4-step place save flow',
     step1Title: '1. Image Upload',
@@ -127,17 +129,14 @@ const translations = {
     step4Title: '4. Save',
     step4Action: '4. Save Place',
     step4ActionEdit: 'Save Changes',
-    selectedFileNone: 'No file selected yet.',
+    selectedFileNone: 'Start by uploading one screenshot.',
     selectedFileChosen: 'Selected file: {fileName}',
-    uploadPanelTitle: 'Move downward one step at a time',
+    uploadPanelTitle: 'Follow these 4 steps from top to bottom',
     step2Kicker: 'Step 2',
-    step2Body: 'After choosing an image, run OCR to read the text.',
+    step2Body: 'After picking a screenshot, tap Run OCR to read the text.',
     step3Kicker: 'Step 3',
     step4Kicker: 'Step 4',
-    stepActionHint: 'Tap the large button below to move to the next step.',
-    uploadLabel: 'Change image',
-    uploadDropzoneTitle: 'Pick another screenshot',
-    uploadDropzoneBody: 'Change the file to rerun OCR and address confirmation.',
+    stepActionHint: 'Tap one large button at a time to open the next step.',
     parsedNameLabel: 'Place name',
     parsedNamePlaceholder: 'e.g. JJ Sarawak Noodle',
     parsedAddressLabel: 'Address',
@@ -180,21 +179,22 @@ const translations = {
     buildDescriptionAddressPrefix: 'Address: {address}',
     previewPlaceFallback: 'Preview place',
     candidateSearchInProgress: 'Checking address candidates…',
-    candidateSearchSuccess: 'Address candidates found. Confirm the location, then use step 4 to save.',
+    candidateSearchSuccess: 'Address candidates found. Tap the right place, then save in step 4.',
     candidateSearchNeedInput: 'Run OCR first, or enter a name and address.',
     candidateSearchNoResult: 'No candidates found. Try making the name or address more specific.',
     candidateSearchError: 'Address confirmation failed: {message}',
     candidateSearchProviderError: 'Photon geocoding failed: {status}',
-    ocrMissingFile: 'Choose an image first.',
+    ocrMissingFile: 'Start by uploading one screenshot.',
+    ocrStatusIdle: 'Upload a screenshot, then tap step 2 to run OCR.',
     ocrRunning: 'Running OCR… reading text from the image. The first run may take 10–30 seconds.',
-    ocrSuccess: 'OCR complete. Review the fields, then run step 3 to confirm the address.',
+    ocrSuccess: 'OCR is done. Check the fields, then tap step 3 to confirm the address.',
     ocrError: 'OCR failed: {message}',
     tesseractLoadError: 'Could not load Tesseract.js.',
     supabaseLoadError: 'Could not load the Supabase SDK.',
     cloudFetchError: 'Could not load shared storage: {message}',
     cloudPushError: 'Failed to save to shared storage: {message}',
     saveNeedsName: 'A place name is required before saving.',
-    saveNeedsCandidate: 'Select an address candidate on the map preview first.',
+    saveNeedsCandidate: 'Tap the correct place card below the map first.',
     duplicatePlace: "This place is already saved: '{name}'. Edit the existing item instead.",
     saveSuccessNew: "'{name}' saved. It will be reflected on this device and in the shared list.",
     saveSuccessEdit: "'{name}' updated. It is ready to sync to the shared list.",
@@ -208,6 +208,9 @@ const translations = {
     mapBadgeOcr: 'OCR import',
     mapBadgeAddress: 'Address confirm',
     mapAriaLabel: 'Restaurant map',
+    languageToggleToEnglish: 'English',
+    languageToggleToKorean: '한국어',
+    languageToggleAriaLabel: 'Switch language',
   },
 };
 
@@ -216,13 +219,32 @@ function detectPreferredLanguage(languages = navigator.languages ?? [navigator.l
   return preferred.some((value) => String(value || '').toLowerCase().startsWith('ko')) ? 'ko' : 'en';
 }
 
-const preferredLanguage = detectPreferredLanguage();
-document.documentElement.lang = preferredLanguage;
+function loadSavedLanguage() {
+  try {
+    const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return savedLanguage && translations[savedLanguage] ? savedLanguage : null;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+let currentLanguage = loadSavedLanguage() || detectPreferredLanguage();
+document.documentElement.lang = currentLanguage;
 
 function t(key, params = {}) {
-  const locale = translations[preferredLanguage] || translations.ko;
+  const locale = translations[currentLanguage] || translations.ko;
   const template = locale[key] ?? translations.ko[key] ?? key;
   return template.replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? `{${name}}`));
+}
+
+function updateLanguageToggleButton() {
+  if (!languageToggleButton) return;
+
+  const nextLanguageLabel = currentLanguage === 'ko' ? t('languageToggleToEnglish') : t('languageToggleToKorean');
+  languageToggleButton.textContent = nextLanguageLabel;
+  languageToggleButton.dataset.language = currentLanguage === 'ko' ? 'en' : 'ko';
+  languageToggleButton.setAttribute('aria-label', t('languageToggleAriaLabel'));
 }
 
 function applyTranslations() {
@@ -237,6 +259,37 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n-aria-label]').forEach((node) => {
     node.setAttribute('aria-label', t(node.dataset.i18nAriaLabel));
   });
+
+  updateLanguageToggleButton();
+}
+
+function setLanguage(nextLanguage) {
+  if (!translations[nextLanguage] || nextLanguage === currentLanguage) return;
+
+  currentLanguage = nextLanguage;
+  document.documentElement.lang = currentLanguage;
+
+  try {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+  } catch (error) {
+    console.error(error);
+  }
+
+  applyTranslations();
+  updateFormMode();
+  selectedFileName.textContent = imageUpload.files?.[0]
+    ? t('selectedFileChosen', { fileName: imageUpload.files[0].name })
+    : t('selectedFileNone');
+  updateAllPlaces();
+
+  if (!latestGeocodeCandidates.length) {
+    if (geocodeCandidates.classList.contains('empty-state')) {
+      geocodeCandidates.textContent = t('candidateListEmpty');
+    }
+    return;
+  }
+
+  renderCandidateList(latestGeocodeCandidates);
 }
 
 const map = L.map('map').setView(DEFAULT_CENTER, DEFAULT_ZOOM);
@@ -261,6 +314,7 @@ const saveStepSection = document.getElementById('saveStepSection');
 const ocrStatus = document.getElementById('ocrStatus');
 const syncStatus = document.getElementById('syncStatus');
 const selectedFileName = document.getElementById('selectedFileName');
+const languageToggleButton = document.getElementById('languageToggleButton');
 const geocodeCandidates = document.getElementById('geocodeCandidates');
 const editModeHint = document.getElementById('editModeHint');
 
@@ -300,6 +354,7 @@ function buildDescription(place) {
 }
 
 function setStatus(message, variant = 'default') {
+  delete ocrStatus.dataset.i18nKey;
   ocrStatus.textContent = message;
   ocrStatus.className = 'status-message';
   if (variant !== 'default') {
@@ -1089,6 +1144,7 @@ runOcrButton.addEventListener('click', handleRunOcr);
 previewButton.addEventListener('click', handlePreview);
 saveParsedPlaceButton.addEventListener('click', handleSave);
 syncNowButton.addEventListener('click', handleSyncNow);
+languageToggleButton?.addEventListener('click', () => setLanguage(currentLanguage === 'ko' ? 'en' : 'ko'));
 categoryFilter.addEventListener('change', renderPlaces);
 
 applyTranslations();

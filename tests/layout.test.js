@@ -11,10 +11,17 @@ test('index starts with upload-first mobile flow and reveals later steps progres
   assert.ok(heroSection, 'hero section should exist');
   assert.match(heroSection[1], /data-i18n-key="heroTitle"/, 'hero title should be localizable');
   assert.match(heroSection[1], /for="imageUpload"[^>]*data-i18n-key="step1Action"/, 'image upload action should stay visible at the top');
+  assert.match(heroSection[1], /id="languageToggleButton"/, 'language toggle button should stay visible in the hero section');
   assert.doesNotMatch(heroSection[1], /id="runOcrButton"/, 'OCR button should not stay crowded in the top hero section');
   assert.doesNotMatch(heroSection[1], /id="previewButton"/, 'preview button should not stay crowded in the top hero section');
   assert.doesNotMatch(heroSection[1], /id="saveParsedPlace"/, 'save button should not stay crowded in the top hero section');
   assert.doesNotMatch(heroSection[1], /\|/, 'hero flow should not render bilingual copy side by side');
+
+  assert.match(html, /data-i18n-key="captureKicker">캡처 저장</, 'capture-save section label should remain visible');
+  assert.match(html, /data-i18n-key="uploadPanelTitle">위에서 아래로 4단계만 따라가세요</, 'top-to-bottom 4-step guidance should remain visible');
+  assert.match(html, /data-i18n-key="mvpBadge">MVP</, 'MVP badge should remain visible');
+  assert.match(html, /data-i18n-key="browseKicker">둘러보기</, 'browse section kicker should remain visible');
+  assert.match(html, /data-i18n-key="filterPanelTitle">저장된 장소 필터</, 'saved-place filter title should remain visible');
 
   assert.match(html, /id="ocrStepSection"[^>]*hidden/, 'OCR step should be hidden initially');
   assert.match(html, /id="reviewStepSection"[^>]*hidden/, 'review step should be hidden initially');
@@ -35,6 +42,17 @@ test('all non-directions actions share one unified button color treatment', () =
   assert.match(appJs, /class=\"place-action-link primary-button\"/, 'saved-place view action should use the shared primary button style');
   assert.match(appJs, /class=\"place-action-link secondary-button directions-action\"/, 'directions action should remain the only secondary-colored action');
   assert.match(html, /data-i18n-key="stepActionHint"/, 'progressive flow should include a consistent tap hint for the next action');
+  assert.match(html, /data-i18n-key="ocrStatusIdle"/, 'idle OCR guidance should be localized through a translation key');
+});
+
+test('capture-save MVP flow no longer shows a separate change-image panel copy', () => {
+  assert.doesNotMatch(html, /data-i18n-key="uploadLabel"/, 'separate change-image label should be removed for the MVP flow');
+  assert.doesNotMatch(html, /data-i18n-key="uploadDropzoneTitle"/, 'change-image dropzone title should be removed for the MVP flow');
+  assert.doesNotMatch(html, /data-i18n-key="uploadDropzoneBody"/, 'change-image helper copy should be removed for the MVP flow');
+  assert.doesNotMatch(appJs, /uploadLabel:\s*'Change image'/, 'legacy change-image translation copy should be removed from app code too');
+  assert.doesNotMatch(appJs, /uploadDropzoneTitle:\s*'Pick another screenshot'/, 'legacy reselect-screenshot title should be removed from app code too');
+  assert.doesNotMatch(appJs, /uploadDropzoneBody:\s*'Change the file to rerun OCR and address confirmation\.'/,'legacy change-image helper copy should be removed from app code too');
+  assert.match(html, /<input id="imageUpload" type="file" accept="image\/\*" hidden \/>/, 'file input should still exist for the top upload action');
 });
 
 test('index exposes simplified shared Supabase controls', () => {
@@ -72,11 +90,18 @@ test('index no longer exposes raw OCR text controls and instead keeps only the n
   assert.doesNotMatch(html, /id="ocrLineSuggestionList"/, 'OCR line suggestion chips should be removed with the raw OCR view');
 });
 
-test('app localizes UI from browser language instead of rendering both languages together', () => {
+test('app localizes UI from browser language and lets users override it with a visible toggle button', () => {
   assert.match(appJs, /navigator\.languages \?\? \[navigator\.language\]/, 'app should inspect browser language preferences');
   assert.match(appJs, /function detectPreferredLanguage\(/, 'app should detect the preferred UI language');
-  assert.match(appJs, /document\.documentElement\.lang = preferredLanguage/, 'app should update the document language');
+  assert.match(appJs, /const LANGUAGE_STORAGE_KEY = 'myPlaces\.uiLanguage\.v1';/, 'app should persist a manual language choice');
+  assert.match(appJs, /function loadSavedLanguage\(/, 'app should restore a previously chosen language');
+  assert.match(appJs, /let currentLanguage = loadSavedLanguage\(\) \|\| detectPreferredLanguage\(\);/, 'app should prefer a saved language override before browser detection');
+  assert.match(appJs, /document\.documentElement\.lang = currentLanguage/, 'app should update the document language');
   assert.match(appJs, /function applyTranslations\(/, 'app should apply localized copy to the DOM');
+  assert.match(appJs, /function updateLanguageToggleButton\(/, 'app should keep the language toggle label in sync');
+  assert.match(appJs, /function setLanguage\(/, 'app should expose a language switcher');
+  assert.match(appJs, /localStorage\.setItem\(LANGUAGE_STORAGE_KEY, nextLanguage\)/, 'app should persist the chosen language');
+  assert.match(appJs, /languageToggleButton\?\.addEventListener\('click', \(\) => setLanguage\(currentLanguage === 'ko' \? 'en' : 'ko'\)\)/, 'language toggle button should switch between Korean and English');
   assert.match(appJs, /data-i18n-key/, 'app should look for localizable text nodes');
   assert.match(appJs, /data-i18n-placeholder/, 'app should localize placeholders too');
 });

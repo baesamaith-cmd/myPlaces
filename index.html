@@ -31,11 +31,21 @@
         <section class="hero-card panel">
           <div class="hero-topline">
             <p class="eyebrow">myPlaces</p>
-            <span class="hero-chip" data-i18n-key="heroChip">Singapore Food Map</span>
+            <div class="hero-topline-actions">
+              <span class="hero-chip" data-i18n-key="heroChip">Singapore Food Map</span>
+              <button
+                id="languageToggleButton"
+                type="button"
+                class="lang-toggle-button"
+                data-i18n-aria-label="languageToggleAriaLabel"
+              >
+                English
+              </button>
+            </div>
           </div>
 
-          <h1 data-i18n-key="heroTitle">맛집 캡처를 바로 지도에 올리기</h1>
-          <p class="subtitle" data-i18n-key="heroSubtitle">이미지 업로드부터 차례대로 진행하는 모바일 친화 흐름</p>
+          <h1 data-i18n-key="heroTitle">맛집 캡처를 지도에 바로 저장하기</h1>
+          <p class="subtitle" data-i18n-key="heroSubtitle">스크린샷 업로드 → 글자 인식 → 주소 확인 → 저장</p>
 
           <div class="hero-upload-action">
             <label for="imageUpload" class="flow-action-button primary-button" data-i18n-key="step1Action">
@@ -43,26 +53,19 @@
             </label>
           </div>
 
-          <p id="selectedFileName" class="hero-helper-text" data-i18n-key="selectedFileNone">선택된 파일이 없습니다.</p>
+          <p id="selectedFileName" class="hero-helper-text" data-i18n-key="selectedFileNone">먼저 스크린샷 1장을 올려주세요.</p>
         </section>
 
         <section class="panel upload-panel">
           <div class="section-title-row upload-stage-header">
             <div>
-              <p class="section-kicker" data-i18n-key="captureKicker">Capture ingestion</p>
-              <h2 data-i18n-key="uploadPanelTitle">한 단계씩 아래로 진행하세요</h2>
+              <p class="section-kicker" data-i18n-key="captureKicker">캡처 저장</p>
+              <h2 data-i18n-key="uploadPanelTitle">위에서 아래로 4단계만 따라가세요</h2>
             </div>
             <span class="helper badge-soft" data-i18n-key="mvpBadge">MVP</span>
           </div>
 
-          <label class="upload-label" for="imageUpload" data-i18n-key="uploadLabel">이미지 바꾸기</label>
-          <div class="upload-dropzone">
-            <input id="imageUpload" type="file" accept="image/*" />
-            <div class="dropzone-copy">
-              <strong data-i18n-key="uploadDropzoneTitle">다른 캡처로 다시 선택</strong>
-              <p data-i18n-key="uploadDropzoneBody">파일을 바꾸면 OCR과 주소 확인을 다시 실행할 수 있어요.</p>
-            </div>
-          </div>
+          <input id="imageUpload" type="file" accept="image/*" hidden />
 
           <section id="ocrStepSection" class="step-panel" hidden>
             <div class="section-title-row compact-row">
@@ -71,8 +74,8 @@
                 <h3 class="mini-title" data-i18n-key="step2Title">2. OCR</h3>
               </div>
             </div>
-            <p class="helper-text" data-i18n-key="step2Body">이미지를 고른 뒤 OCR을 실행해서 텍스트를 읽어오세요.</p>
-            <p class="step-action-hint" data-i18n-key="stepActionHint">아래 큰 버튼을 누르면 다음으로 진행됩니다.</p>
+            <p class="helper-text" data-i18n-key="step2Body">스크린샷을 고른 뒤 OCR 실행을 눌러 글자를 읽어오세요.</p>
+            <p class="step-action-hint" data-i18n-key="stepActionHint">아래 큰 버튼을 하나씩 누르면 다음 단계가 열립니다.</p>
             <button id="runOcrButton" type="button" class="flow-action-button primary-button full-width-button" data-i18n-key="step2Action">
               2. OCR 실행
             </button>
@@ -86,8 +89,8 @@
               </div>
             </div>
 
-            <p id="ocrStatus" class="status-message" aria-live="polite">
-              이미지를 선택하고 OCR 실행을 눌러주세요.
+            <p id="ocrStatus" class="status-message" aria-live="polite" data-i18n-key="ocrStatusIdle">
+              스크린샷을 올린 뒤 2단계 OCR 실행을 눌러주세요.
             </p>
 
             <div class="form-grid">
@@ -115,7 +118,7 @@
               </label>
             </div>
 
-            <p class="step-action-hint" data-i18n-key="stepActionHint">아래 큰 버튼을 누르면 다음으로 진행됩니다.</p>
+            <p class="step-action-hint" data-i18n-key="stepActionHint">아래 큰 버튼을 하나씩 누르면 다음 단계가 열립니다.</p>
             <button id="previewButton" type="button" class="flow-action-button primary-button full-width-button" data-i18n-key="step3Action">
               3. 주소 확인
             </button>
@@ -140,7 +143,7 @@
             </div>
             <p id="editModeHint" class="helper-text form-mode-hint" data-i18n-key="editModeHintNew">새 장소 저장 모드입니다.</p>
             <div class="button-row save-actions-row">
-              <p class="step-action-hint" data-i18n-key="stepActionHint">아래 큰 버튼을 누르면 다음으로 진행됩니다.</p>
+              <p class="step-action-hint" data-i18n-key="stepActionHint">아래 큰 버튼을 하나씩 누르면 다음 단계가 열립니다.</p>
               <button id="saveParsedPlace" type="button" class="flow-action-button primary-button full-width-button" data-i18n-key="step4Action">
                 4. 저장하기
               </button>
@@ -154,7 +157,7 @@
         <section class="controls panel filter-panel">
           <div class="section-title-row compact-row">
             <div>
-              <p class="section-kicker" data-i18n-key="browseKicker">Browse</p>
+              <p class="section-kicker" data-i18n-key="browseKicker">둘러보기</p>
               <h2 data-i18n-key="filterPanelTitle">저장된 장소 필터</h2>
             </div>
           </div>
