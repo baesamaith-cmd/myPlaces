@@ -31,6 +31,7 @@ test('index starts with upload-first mobile flow and reveals later steps progres
   assert.doesNotMatch(appJs, /\bcategoryFilterLabel:\s*['"]/,'removed category filter label key should be deleted from app.js');
   assert.doesNotMatch(appJs, /\bcategoryAllOption:\s*['"]/,'removed category filter option key should be deleted from app.js');
   assert.doesNotMatch(html, /id="categoryFilter"/, 'category dropdown should be removed from the screen');
+  assert.match(html, /<section id="uploadPanel" class="panel upload-panel" hidden>/, 'upload step panel shell should stay hidden until a file/edit flow reveals it');
   assert.doesNotMatch(appJs, /const categoryFilter = document.getElementById\('categoryFilter'\);/, 'category dropdown DOM lookup should be removed from app.js');
   assert.doesNotMatch(appJs, /function renderCategories\(/, 'category dropdown rendering helper should be removed from app.js');
   assert.doesNotMatch(appJs, /categoryFilter\.addEventListener\('change', renderPlaces\);/, 'category dropdown event listener should be removed from app.js');

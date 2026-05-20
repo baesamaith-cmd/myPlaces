@@ -287,6 +287,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 const placeList = document.getElementById('placeList');
 const placeCount = document.getElementById('placeCount');
+const uploadPanel = document.getElementById('uploadPanel');
 const imageUpload = document.getElementById('imageUpload');
 const runOcrButton = document.getElementById('runOcrButton');
 const previewButton = document.getElementById('previewButton');
@@ -360,6 +361,8 @@ function setStepVisibility({
   showReview = false,
   showSave = false,
 } = {}) {
+  const shouldShowUploadPanel = showOcr || showReview || showSave;
+  uploadPanel.hidden = !shouldShowUploadPanel;
   ocrStepSection.hidden = !showOcr;
   reviewStepSection.hidden = !showReview;
   saveStepSection.hidden = !showSave;
